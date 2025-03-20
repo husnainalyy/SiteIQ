@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
 
 // Import routes
 const userRoutes = require('./routes/userRoutes.js');
