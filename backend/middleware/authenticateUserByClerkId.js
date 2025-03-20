@@ -1,4 +1,4 @@
-const User = require("../models/User");
+import User from '../models/User.js';
 
 const authenticateUserByClerkId = async (req, res, next) => {
     const authHeader = req.headers.authorization;   
@@ -24,4 +24,4 @@ const authenticateUserByClerkId = async (req, res, next) => {
     }
 };
 
-module.exports = authenticateUserByClerkId;
+export default authenticateUserByClerkId; // ✅ FIXED

@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose"; // ✅ FIXED (import mongoose)
+
 
 const VectorSchema = new mongoose.Schema({
     websiteUrl: {
@@ -27,4 +28,6 @@ VectorSchema.index({ websiteUrl: 1 });
 VectorSchema.index({ userId: 1 });
 VectorSchema.index({ "metadata.lastUpdated": -1 });
 
-module.exports = mongoose.model("WebsiteVector", VectorSchema);
+
+const WebsiteVector = mongoose.model("WebsiteVector", VectorSchema);
+export default WebsiteVector;

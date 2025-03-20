@@ -1,8 +1,9 @@
-const { MongoDBAtlasVectorSearch } = require("@langchain/mongodb");
-const { OpenAIEmbeddings, ChatOpenAI } = require("@langchain/openai");
-const { ConversationalRetrievalQAChain } = require("langchain/chains");
-const { HumanMessage, AIMessage } = require("langchain/schema");
-const mongoose = require("mongoose");
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
+import { ChatOpenAI } from "@langchain/openai";
+import { ConversationalRetrievalQAChain } from "langchain/chains";
+import { HumanMessage, AIMessage } from "langchain/schema";
+import mongoose from "mongoose";
 
 // Initialize MongoDB Vector Store
 const vectorStore = new MongoDBAtlasVectorSearch(new OpenAIEmbeddings(), {

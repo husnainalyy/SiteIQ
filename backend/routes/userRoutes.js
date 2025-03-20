@@ -1,15 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const userController = require("../controllers/userController.js");
-const authenticateUserByClerkId = require("../middleware/authenticateUserByClerkId.js");
+import express from "express";
+import { getUserProfile, updateUserProfile, deleteUser, getUserSeoReports, getUserSubscription } from "../controllers/userController.js"; // ✅ FIXED
 
-// Apply middleware only to specific routes
+import authenticateUserByClerkId from "../middleware/authenticateUserByClerkId.js";
+
+const router = express.Router();
+
 router.use(authenticateUserByClerkId);
 
-router.get("/profile", userController.getUserProfile);
-router.put("/profile", userController.updateUserProfile);
-router.delete("/", userController.deleteUser);
-router.get("/seo-reports", userController.getUserSeoReports);
-router.get("/subscription", userController.getUserSubscription);
+router.get("/profile", getUserProfile);
+router.put("/profile", updateUserProfile);
+router.delete("/", deleteUser);
+router.get("/seo-reports", getUserSeoReports);
+router.get("/subscription", getUserSubscription);
 
-module.exports = router;
+export default router;

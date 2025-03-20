@@ -1,7 +1,7 @@
-const { Webhook } = require('svix');
-const User = require('../models/User');
+import { Webhook } from 'svix';
+import User from '../models/User.js';
 
-const handleClerkWebhook = async (req, res) => {
+export const handleClerkWebhook = async (req, res) => {
     console.log('Webhook received:', req.body);
     try {
         // Use raw body for signature verification
@@ -134,6 +134,4 @@ const handleClerkWebhook = async (req, res) => {
     }
 }
 
-module.exports = {
-    handleClerkWebhook,
-};
+

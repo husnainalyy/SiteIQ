@@ -1,7 +1,8 @@
-const express = require("express");
+import express from 'express';
 const router = express.Router();
-const { chatWithWebsite, getChatHistory } = require("../controllers/chatbotController");
-const authenticateUserByClerkId = require("../middlewares/authenticateUserByClerkId");
+import chatWithWebsite from "../controllers/chatbotController";
+import getChatHistory  from "../controllers/chatbotController";
+import authenticateUserByClerkId from "../middleware/authenticateUserByClerkId.js";
 
 // 💬 Chat with the AI about a website (Process user queries)
 router.post("/chat", authenticateUserByClerkId, chatWithWebsite);

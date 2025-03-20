@@ -1,4 +1,4 @@
-const User = require("../models/User");
+import User from '../models/User.js';
 
 // Get authenticated user's profile
 const getUserProfile = async (req, res) => {
@@ -105,7 +105,7 @@ const getUserSubscription = async (req, res) => {
     }
 };
 
-module.exports = {
+export {
     getUserProfile,
     updateUserProfile,
     deleteUser,

@@ -1,5 +1,5 @@
-const User = require("../models/User");
-const { chatWithAI } = require("../utils/langchainHelper");
+import User from '../models/User.js';
+import { chatWithAI } from "../utils/langchainHelper.js";
 
 // 💬 Chat with the website AI
 const chatWithWebsite = async (req, res) => {

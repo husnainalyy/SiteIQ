@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const { OpenAIEmbeddings } = require("@langchain/community/embeddings/openai");
-const WebsiteVector = require("./vectorSchema");
+import mongoose from "mongoose";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import WebsiteVector from "./vectorSchema.js";
 
 const UserSchema = new mongoose.Schema({
     // Clerk Authentication
@@ -185,4 +185,5 @@ UserSchema.methods.saveChatMessage = async function (websiteUrl, userMessage, bo
     return this;
 };
 
-module.exports = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
+export default User;

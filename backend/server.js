@@ -1,11 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
+import dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
 
 // Import routes
-const userRoutes = require('./routes/userRoutes.js');
-const webhookRoutes = require('./routes/webhookRoutes.js');
+import userRoutes from './routes/userRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 
 // Initialize Express
 const app = express();

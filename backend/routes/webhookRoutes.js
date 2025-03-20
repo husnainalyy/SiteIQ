@@ -1,9 +1,9 @@
-const express = require('express');
+import express from "express";
 const router = express.Router();
-const webhookController = require('../controllers/webhookController.js');
+import { handleClerkWebhook } from "../controllers/webhookController.js";
 
 
-router.post('/clerk', webhookController.handleClerkWebhook);
+router.post('/clerk', handleClerkWebhook);
 
-module.exports = router;
+export default router; // ✅ Correct ES Modules export
 
