@@ -7,6 +7,8 @@ import mongoose from 'mongoose';
 // Import routes
 import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
+import historyRoutes from './routes/history.routes.js';
 
 // Initialize Express
 const app = express();
@@ -33,6 +35,8 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 
+app.use('/api/seoRecommendations', seoRecommendationsRoutes);
+app.use('/api/history', historyRoutes);
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
