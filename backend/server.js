@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 // Import routes
 import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import seoRoutes from './routes/seoRoutes.js';
 
 // Initialize Express
 const app = express();
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
+app.use('/api/seoreports', seoRoutes); // Mount webhook routes
 
 // Start the server
 app.listen(PORT, () => {
