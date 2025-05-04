@@ -9,12 +9,6 @@ const publicKey = process.env.SEO_API_PUBLIC_KEY;
 const privateKey = process.env.SEO_API_SECRET_KEY; // better name than secretKey
 const salt = process.env.SEO_SALT;
 
-// Check that critical env vars are loaded
-if (!privateKey || !publicKey || !salt) {
-  console.error("Missing SEO API environment variables!");
-  process.exit(1); // Exit the app if env vars are not loaded
-}
-
 const createNewReport = async (req, res) => {
   const { phrase, domain} = req.body;
   // const {clerkUserid} = req.auth.userId
@@ -104,7 +98,6 @@ const createNewReport = async (req, res) => {
   }
 };
 
-
 const getExistingReport = async (req, res) => {
   const { jid } = req.params;
 
@@ -118,7 +111,7 @@ const getExistingReport = async (req, res) => {
     salt
   });
 
-  const maxAttempts = 20; // Optional: avoid infinite loop (3s x 20 = 60s max wait)
+  const maxAttempts = 20;
   let attempts = 0;
 
   const fetchJobStatus = async () => {
@@ -131,7 +124,29 @@ const getExistingReport = async (req, res) => {
       });
 
       if (response.data.ready) {
-        return res.status(200).json(response.data);
+        // Job is ready — now update the DB
+        const report = await SeoReport.findOne({ "phraseResults.jid": jid });
+
+        if (!report) {
+          return res.status(404).json({ error: "Report with this jid not found" });
+        }
+
+        // Find the phraseResult with this jid and update its rawResponse
+        const phraseResult = report.phraseResults.find(p => p.jid === jid);
+
+        if (!phraseResult) {
+          return res.status(404).json({ error: "Phrase result not found for jid" });
+        }
+
+        phraseResult.rawResponse = response.data;
+
+        await report.save();
+
+        return res.status(200).json({
+          message: "Job is ready and report updated successfully",
+          jid,
+          updatedResponse: response.data
+        });
       }
 
       attempts++;
@@ -139,7 +154,6 @@ const getExistingReport = async (req, res) => {
         return res.status(202).json({ message: "Job not ready after waiting, try again later", jid });
       }
 
-      // Wait 3 seconds and try again
       setTimeout(fetchJobStatus, 3000);
     } catch (error) {
       console.error("Error fetching SEO report:", error.response?.data || error.message);
@@ -149,11 +163,78 @@ const getExistingReport = async (req, res) => {
       });
     }
   };
+
   fetchJobStatus();
 };
 
+const scorePhrase = async (req, res) => {
+  const { jid, phrase, domain } = req.body;
 
-export function scoreSeoResponse(rawResponse, keyword, domain) {
+  if (!jid || !phrase || !domain) {
+    return res.status(400).json({ error: "jid, phrase, and domain are required." });
+  }
+
+  const report = await SeoReport.findOne({ domain });
+
+  if (!report) {
+    return res.status(404).json({ error: "Report not found." });
+  }
+
+  const phraseEntry = report.phraseResults.find(p => p.jid === jid && p.phrase === phrase);
+  if (!phraseEntry) {
+    return res.status(404).json({ error: "Phrase not found for given jid." });
+  }
+
+  const scores = scoreSeoResponse(phraseEntry.rawResponse, phrase, domain);
+  phraseEntry.scores = scores;
+
+  await report.save();
+
+  res.status(200).json({
+    message: "Score calculated and saved.",
+    scores
+  });
+};
+
+const deleteReport = async (req, res) => {
+  const { jid } = req.body;
+
+  if (!jid) {
+    return res.status(400).json({ error: "Job ID (jid) is required" });
+  }
+
+  try {
+    // Find report containing the phrase with this jid
+    const report = await SeoReport.findOne({ "phraseResults.jid": jid });
+
+    if (!report) {
+      return res.status(404).json({ error: "No report found containing this jid" });
+    }
+
+    // Filter out the phraseResult with the matching jid
+    report.phraseResults = report.phraseResults.filter(p => p.jid !== jid);
+
+    if (report.phraseResults.length === 0) {
+      // If no phrases left, delete the entire report
+      await SeoReport.findByIdAndDelete(report._id);
+      return res.status(200).json({ message: "Report deleted completely as it had only one phrase" });
+    }
+
+    // Otherwise, save the updated report
+    await report.save();
+
+    res.status(200).json({ message: "Phrase result deleted successfully", jid });
+  } catch (error) {
+    console.error("Error deleting report/phrase:", error.message);
+    res.status(500).json({ error: "Failed to delete report or phrase", details: error.message });
+  }
+};
+
+const returnReport = async (req,res) =>{
+  const {jid} = async 
+}
+
+function scoreSeoResponse(rawResponse, keyword, domain) {
   const scores = {
     rankingPosition: 0,
     keywordRelevance: 0,
