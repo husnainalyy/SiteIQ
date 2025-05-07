@@ -15,7 +15,7 @@ const PhraseResultSchema = new mongoose.Schema({
     competitorAnalysis: { type: Number, default: 0 },
     paginationStrength: { type: Number, default: 0 },
     total: { type: Number, default: 0 }
-  }
+  } 
 });
 
 

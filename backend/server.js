@@ -4,6 +4,11 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 
+// imports for swagger 
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
+import { apiReference } from '@scalar/express-api-reference';
+
 // Import routes
 import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
@@ -34,6 +39,27 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
+
+//swagger routes 
+
+// Serve Swagger UI at /api-docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Serve Scalar API reference at /reference
+app.use(
+  '/reference',
+  apiReference({
+    url: '/openapi.json', // Endpoint serving your OpenAPI spec
+    theme: 'purple', // Optional: choose a theme
+  })
+);
+
+// Serve the OpenAPI spec at /openapi.json
+app.get('/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 
 // Start the server
 app.listen(PORT, () => {
