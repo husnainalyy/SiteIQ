@@ -1,6 +1,6 @@
 import express from "express";
-import { getTechStack } from "../controllers/techStackController.js";
-
+import { recommendStack, improveStack } from "../controllers/techstackcontroller.js"
 const router = express.Router();
-router.post("/recommend-techstack", getTechStack);
+router.post("/recommend", recommendStack);
+router.post("/improve", improveStack);
 export default router;
