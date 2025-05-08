@@ -8,58 +8,17 @@ import {
 } from '../controllers/seoController.js';
 
 const router = express.Router(); 
-// /api/seoreports
+const mockClerkAuth = (req, res, next) => {
+  // Simulating Clerk authentication
+  req.auth = { 
+    clerkUserId: "clerk_user_12345" // Your test user ID
+  };
 
-
-/**
- * @swagger
- * /api/seoreports/create:
- *   post:
- *     summary: Create a new SEO report
- *     tags: [SEO Reports]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               phrase:
- *                 type: string
- *                 example: "best coffee shops"
- *               location:
- *                 type: string
- *                 example: "New York"
- *     responses:
- *       201:
- *         description: Report created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 reportId:
- *                   type: string
- */
+  next();
+};
+router.use(mockClerkAuth);
 router.post("/create", createNewReport);   // body {domain, phrase}
-/** 
- * @swagger
- * /api/seoreports/tempget/:jid
- *  get:
- *    summary:
- *    tags: [SEO Reports]
- *  
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- */
+
 router.get("/tempget/:jid", getExistingReport); // param {jid}
 
 router.post("/score", scorePhrase); // body {jid, phrase, domain}

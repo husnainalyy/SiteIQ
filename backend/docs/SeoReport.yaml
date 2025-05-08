@@ -5,14 +5,14 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:5000/api
+  - url: http://localhost:5000/api/
 
 tags:
   - name: SEO Reports
     description: All endpoints related to SEO report generation and management
 
 paths:
-  /seoreports/create:
+  /api/seoreports/create:
     post:
       summary: Create a new SEO report
       tags: [SEO Reports]
@@ -40,7 +40,7 @@ paths:
         '500':
           description: Internal server error
 
-  /seoreports/tempget/{jid}:
+  /api/seoreports/tempget/{jid}:
     get:
       summary: Retrieve SEO report from external API and update database
       tags: [SEO Reports]
@@ -63,7 +63,7 @@ paths:
         '500':
           description: Internal server error
 
-  /seoreports/score:
+  /api/seoreports/score:
     post:
       summary: Score a phrase based on a completed SEO report
       tags: [SEO Reports]
@@ -95,7 +95,7 @@ paths:
         '404':
           description: Report or phrase not found
 
-  /seoreports/delete/{jid}:
+  /api/seoreports/delete/{jid}:
     delete:
       summary: Delete a phrase result or entire report by jid
       tags: [SEO Reports]
@@ -116,7 +116,7 @@ paths:
         '500':
           description: Internal server error
 
-  /seoreports/return/{jid}:
+  /api/seoreports/return/{jid}:
     get:
       summary: Return the saved SEO report data for a given jid
       tags: [SEO Reports]

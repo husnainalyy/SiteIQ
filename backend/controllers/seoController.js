@@ -9,22 +9,18 @@ const publicKey = process.env.SEO_API_PUBLIC_KEY;
 const privateKey = process.env.SEO_API_SECRET_KEY; // better name than secretKey
 const salt = process.env.SEO_SALT;
 
+
 const createNewReport = async (req, res) => {
-  const { phrase, domain} = req.body;
-  // const {clerkUserid} = req.auth.userId
-  const clerkUserId = "clerk_user_12345";
+  const { phrase, domain } = req.body;
+  const { clerkUserId } = req.auth;
 
   if (!phrase || !domain || !clerkUserId) {
-    return res.status(400).json({ error: "Missing required fields: phrase, domain, or clerkUserId" });
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const { ts, hash } = generateAuthoritasHash({
-    publicKey,
-    privateKey,
-    salt
-  });
-
   try {
+    // Step 1: Generate job ID from Authoritas API
+    const { ts, hash } = generateAuthoritasHash({ publicKey, privateKey, salt });
     const jobResponse = await axios.post(
       'https://v3.api.analyticsseo.com/serps/',
       {
@@ -44,55 +40,54 @@ const createNewReport = async (req, res) => {
 
     const jid = jobResponse.data.jid;
 
-    // Check if document exists
-    const existingReport = await SeoReport.findOne({ clerkUserId, domain });
+    // Step 2: Check if report already exists
+    let report = await SeoReport.findOne({ clerkUserId, domain });
 
-    if (!existingReport) {
-      // Create new document
-      const newReport = await SeoReport.create({
+    let message;
+
+    if (!report) {
+      // Step 3: Create new document if none exists
+      report = await SeoReport.create({
         clerkUserId,
         domain,
         phraseResults: [{
           phrase,
           jid,
-          rawResponse: jobResponse.data
         }]
       });
-      return res.status(201).json({
-        message: "New report created",
-        jid,
-        report: newReport
-      });
-    }
-
-    // Check if phrase already exists
-    const existingPhrase = existingReport.phraseResults.find(p => p.phrase === phrase);
-
-    if (existingPhrase) {
-      // Update existing phrase entry
-      existingPhrase.jid = jid;
-      existingPhrase.rawResponse = jobResponse.data;
+      message = "New report created";
     } else {
-      // Add new phrase result
-      existingReport.phraseResults.push({
-        phrase,
-        jid,
-        rawResponse: jobResponse.data
-      });
+      // Step 4: Update or insert phrase result
+      const existingPhrase = report.phraseResults.find(p => p.phrase === phrase);
+
+      if (existingPhrase) {
+        existingPhrase.jid = jid;
+        existingPhrase.rawResponse = jobResponse.data;
+        existingPhrase.updatedAt = new Date();
+        message = "Phrase updated";
+      } else {
+        report.phraseResults.push({
+          phrase,
+          jid,
+          rawResponse: jobResponse.data
+        });
+        message = "New phrase added";
+      }
+
+      await report.save();
     }
 
-    const savedReport = await existingReport.save();
-
-    res.status(200).json({
-      message: existingPhrase ? "Phrase updated" : "New phrase added",
+    // Step 5: Respond
+    return res.status(200).json({
+      message,
       jid,
-      report: savedReport
+      report
     });
 
   } catch (error) {
-    console.error("SEO API error:", error.response?.data || error.message);
-    res.status(500).json({
-      error: "Failed to create or update SEO report",
+    console.error("Error in createNewReport:", error);
+    return res.status(500).json({
+      error: "Failed to process SEO report",
       details: error.response?.data || error.message
     });
   }
@@ -175,6 +170,7 @@ const scorePhrase = async (req, res) => {
   }
 
   const report = await SeoReport.findOne({ domain });
+console.log("Enterd scorephrase")
 
   if (!report) {
     return res.status(404).json({ error: "Report not found." });
@@ -186,6 +182,7 @@ const scorePhrase = async (req, res) => {
   }
 
   const scores = scoreSeoResponse(phraseEntry.rawResponse, phrase, domain);
+  console.log(scores);
   phraseEntry.scores = scores;
 
   await report.save();
@@ -242,7 +239,7 @@ const returnReport = async (req, res) => {
     const report = await SeoReport.findOne({ "phraseResults.jid": jid });
 
     if (!report) {
-      return res.status(404).json({ error: "No report found containing this jid" });
+      return res.status(404).json({ error: "No report found containing this jid ",  jid });
     }
 
     // Find the specific phraseResult inside the report
@@ -265,8 +262,6 @@ const returnReport = async (req, res) => {
     return res.status(500).json({ error: "Internal server error", details: error.message });
   }
 };
-
-
 function scoreSeoResponse(rawResponse, keyword, domain) {
   const scores = {
     rankingPosition: 0,
@@ -279,54 +274,85 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
     total: 0
   };
 
-  const organicResults = rawResponse?.results?.organic || {};
-  const summary = rawResponse?.summary || {};
-  const rankings = Object.entries(organicResults).map(([position, data]) => ({
-    position: parseInt(position),
-    ...data
-  }));
+  const responseData = rawResponse?.response || {};
+  const results = responseData.results || {};
+  const summary = responseData.summary || {};
 
-  // 1. Ranking Position
-  const found = rankings.find(r => r.url.includes(domain));
-  if (found) {
-    const pos = found.position;
-    if (pos === 1) scores.rankingPosition = 30;
-    else if (pos <= 3) scores.rankingPosition = 25;
-    else if (pos <= 10) scores.rankingPosition = 15;
+  const organicEntries = Object.entries(results.organic || {});
+  const universalEntries = Object.entries(results.universal || {});
+
+  const top10 = organicEntries
+    .map(([positionStr, result]) => ({
+      position: parseInt(positionStr),
+      ...result
+    }))
+    .filter(r => r.position <= 10);
+
+  const lowerKeyword = keyword.toLowerCase();
+
+  // 1. Ranking Position (30 pts max)
+  const rank = organicEntries.find(([_, r]) => r.url?.includes(domain));
+  if (rank) {
+    const position = parseInt(rank[0]);
+    if (position === 1) scores.rankingPosition = 30;
+    else if (position <= 3) scores.rankingPosition = 27;
+    else if (position <= 10) scores.rankingPosition = 25;
+    else if (position <= 15) scores.rankingPosition = 20;
+    else if (position <= 25) scores.rankingPosition = 15;
+    else if (position <= 35) scores.rankingPosition = 10;
     else scores.rankingPosition = 5;
   }
 
-  // 2. Keyword Relevance (first 10 results)
-  rankings.slice(0, 10).forEach(result => {
-    if (result.title?.includes(keyword)) scores.keywordRelevance += 10;
-    if (result.description?.includes(keyword)) scores.keywordRelevance += 10;
-    if (result.url?.includes(keyword)) scores.keywordRelevance += 5;
+  // 2. Keyword Relevance (20 pts max)
+  let relevanceScore = 0;
+  top10.forEach(result => {
+    if (result.title?.toLowerCase().includes(lowerKeyword)) relevanceScore += 8;
+    if (result.description?.toLowerCase().includes(lowerKeyword)) relevanceScore += 8;
+    if (result.url?.toLowerCase().includes(lowerKeyword)) relevanceScore += 4;
   });
+  scores.keywordRelevance = Math.min(relevanceScore, 20);
 
-  // 3. Rich Snippets
-  rankings.slice(0, 10).forEach(result => {
-    if (result.rich_snippets?.length > 0) scores.richSnippets += 20;
+  // 3. Rich Snippets (10 pts max)
+  let richScore = 0;
+  universalEntries.forEach(([_, result]) => {
+    if (Array.isArray(result.rich_snippets) && result.rich_snippets.length > 0) {
+      richScore += 5;
+    }
   });
+  scores.richSnippets = Math.min(richScore, 10);
 
-  // 4. URL Structure
-  rankings.slice(0, 10).forEach(result => {
-    if (!result.url.includes("?") && !result.url.includes("_")) scores.urlStructure += 10;
+  // 4. URL Structure (10 pts max)
+  let cleanUrlScore = 0;
+  top10.forEach(result => {
+    try {
+      const pathname = new URL(result.url).pathname;
+      if (!pathname.includes("?") && !pathname.includes("_")) {
+        cleanUrlScore += 2;
+      }
+    } catch {}
   });
+  scores.urlStructure = Math.min(cleanUrlScore, 10);
 
-  // 5. Visibility
-  rankings.slice(0, 10).forEach(result => {
-    if (result.above_the_fold) scores.visibility += 15;
+  // 5. Visibility (10 pts max)
+  let visibilityScore = 0;
+  top10.forEach(result => {
+    if (result.above_the_fold) visibilityScore += 3;
   });
+  scores.visibility = Math.min(visibilityScore, 10);
 
-  // 6. Competitor Analysis (bonus if your domain is in top 10)
-  const top10Hosts = rankings.slice(0, 10).map(r => new URL(r.url).hostname);
-  if (top10Hosts.includes(domain)) scores.competitorAnalysis = 10;
+  // 6. Competitor Analysis (10 pts max)
+  try {
+    const top10Hosts = top10.map(r => new URL(r.url).hostname);
+    if (top10Hosts.includes(domain)) {
+      scores.competitorAnalysis = 10;
+    }
+  } catch {}
 
-  // 7. Pagination Strength
-  const page1Organic = summary?.pages?.["1"]?.organic || 0;
-  scores.paginationStrength = Math.min(page1Organic * 2, 20);
+  // 7. Pagination Strength (10 pts max)
+  const page1Organic = summary.pages?.["1"]?.organic || 0;
+  scores.paginationStrength = Math.min(page1Organic, 10); // 1pt per result on page 1
 
-  // Total
+  // Total Score
   scores.total = Object.values(scores).reduce((sum, val) => sum + val, 0);
 
   return scores;
