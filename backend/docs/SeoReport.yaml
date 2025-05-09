@@ -1,0 +1,138 @@
+openapi: 3.0.0
+info:
+  title: SiteIQ SEO Reports API
+  description: API for generating, retrieving, scoring, and managing SEO reports.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000/api/
+
+tags:
+  - name: SEO Reports
+    description: All endpoints related to SEO report generation and management
+
+paths:
+  /api/seoreports/create:
+    post:
+      summary: Create a new SEO report
+      tags: [SEO Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phrase
+                - domain
+              properties:
+                phrase:
+                  type: string
+                  example: buy shoes online
+                domain:
+                  type: string
+                  example: example.com
+      responses:
+        '201':
+          description: Report created successfully
+        '400':
+          description: Missing required fields
+        '500':
+          description: Internal server error
+
+  /api/seoreports/tempget/{jid}:
+    get:
+      summary: Retrieve SEO report from external API and update database
+      tags: [SEO Reports]
+      parameters:
+        - in: path
+          name: jid
+          required: true
+          schema:
+            type: string
+          description: Job ID for the report
+      responses:
+        '200':
+          description: Report updated and returned
+        '202':
+          description: Job not ready yet
+        '400':
+          description: Missing jid parameter
+        '404':
+          description: Report not found
+        '500':
+          description: Internal server error
+
+  /api/seoreports/score:
+    post:
+      summary: Score a phrase based on a completed SEO report
+      tags: [SEO Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - jid
+                - phrase
+                - domain
+              properties:
+                jid:
+                  type: string
+                  example: job_123456789
+                phrase:
+                  type: string
+                  example: running shoes
+                domain:
+                  type: string
+                  example: example.com
+      responses:
+        '200':
+          description: Score calculated and saved
+        '400':
+          description: Missing fields
+        '404':
+          description: Report or phrase not found
+
+  /api/seoreports/delete/{jid}:
+    delete:
+      summary: Delete a phrase result or entire report by jid
+      tags: [SEO Reports]
+      parameters:
+        - in: path
+          name: jid
+          required: true
+          schema:
+            type: string
+          description: Job ID of the phrase/report to delete
+      responses:
+        '200':
+          description: Phrase or report deleted
+        '400':
+          description: Missing jid
+        '404':
+          description: Report or phrase not found
+        '500':
+          description: Internal server error
+
+  /api/seoreports/return/{jid}:
+    get:
+      summary: Return the saved SEO report data for a given jid
+      tags: [SEO Reports]
+      parameters:
+        - in: path
+          name: jid
+          required: true
+          schema:
+            type: string
+          description: Job ID to look up in the database
+      responses:
+        '200':
+          description: Report returned successfully
+        '400':
+          description: Missing jid
+        '404':
+          description: Report not found
+        '500':
+          description: Internal server error
