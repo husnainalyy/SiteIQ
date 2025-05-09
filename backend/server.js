@@ -3,6 +3,7 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import { clerkMiddleware } from '@clerk/express'
 
 // imports for swagger 
 import swaggerUi from 'swagger-ui-express';
@@ -27,27 +28,36 @@ app.use(cors({
   origin: '*', // Or '*' for testing
   credentials: true
 }));
+//app.use(clerkMiddleware());
+
 app.use('/api/webhooks', express.raw({ type: 'application/json' })); // Raw body for webhooks
+
+//middle wares 
 app.use(express.json()); // JSON for other routes
-app.use("/api/chat", chatRouter);
 
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
     .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('Welcome to SiteIQ Backend!');
+  res.send('Welcome to SiteIQ Backend!');
 });
 
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
+app.use('/api/history', historyRoutes);app.use("/api/techstack", techStackRoutes);
+app.use('/api/seoRecommendations', seoRecommendationsRoutes);
+app.use("/api/chat", chatRouter);
+
+
+
 
 //swagger routes 
 
@@ -70,8 +80,6 @@ app.get('/openapi.json', (req, res) => {
 });
 
 
-app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use('/api/history', historyRoutes);app.use("/api/techstack", techStackRoutes);
 
 // Start the server
 app.listen(PORT, () => {

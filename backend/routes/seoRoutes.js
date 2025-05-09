@@ -1,4 +1,5 @@
 import express from "express";
+import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
   createNewReport,
   getExistingReport,
@@ -8,15 +9,9 @@ import {
 } from '../controllers/seoController.js';
 
 const router = express.Router(); 
-const mockClerkAuth = (req, res, next) => {
-  // Simulating Clerk authentication
-  req.auth = { 
-    clerkUserId: "clerk_user_12345" // Your test user ID
-  };
 
-  next();
-};
 router.use(mockClerkAuth);
+
 router.post("/create", createNewReport);   // body {domain, phrase}
 
 router.get("/tempget/:jid", getExistingReport); // param {jid}
