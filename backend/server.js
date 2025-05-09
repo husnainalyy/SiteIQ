@@ -12,6 +12,8 @@ import { apiReference } from '@scalar/express-api-reference';
 // Import routes
 import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
+import historyRoutes from './routes/history.routes.js';
 import seoRoutes from './routes/seoRoutes.js';
 
 // Initialize Express
@@ -64,6 +66,8 @@ app.get('/openapi.json', (req, res) => {
 });
 
 
+app.use('/api/seoRecommendations', seoRecommendationsRoutes);
+app.use('/api/history', historyRoutes);
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
