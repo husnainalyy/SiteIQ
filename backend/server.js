@@ -21,7 +21,7 @@ import chatRouter from './routes/techstackChatRouter.js';
 
 // Initialize Express
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4500;
 
 // Middleware
 app.use(cors({
