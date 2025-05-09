@@ -9,9 +9,20 @@ const generateSEORecommendations = async (req, res) => {
   try {
     const { userId, websiteUrl, seoReport } = req.body;
 
+    // Initial required fields check
     if (!userId || !websiteUrl || !seoReport) {
       return res.status(400).json({
         error: "Missing required fields (userId, websiteUrl, seoReport).",
+      });
+    }
+
+    // ✅ NEW CHECK: Ensure seoReport is not empty or invalid
+    if (
+      typeof seoReport !== 'object' ||
+      Object.keys(seoReport).length === 0
+    ) {
+      return res.status(400).json({
+        error: "SEO Report is empty or invalid. Cannot generate recommendations.",
       });
     }
 
