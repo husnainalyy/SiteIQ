@@ -12,7 +12,7 @@ tags:
     description: Manage AI-generated SEO suggestions per user and website
 
 paths:
-  /seo/generate:
+  /api/seo/generate:
     post:
       summary: Generate new SEO recommendations for a website
       tags: [SEO Recommendations]
@@ -57,7 +57,7 @@ paths:
         '500':
           description: Internal server or AI failure
 
-  /seo/{userId}:
+  /api/seo/{userId}:
     get:
       summary: Get all SEO recommendations for all websites of a user
       tags: [SEO Recommendations]
@@ -88,7 +88,7 @@ paths:
         '500':
           description: Server error
 
-  /seo/{userId}/{websiteUrl}:
+  /api/seo/{userId}/{websiteUrl}:
     get:
       summary: Get SEO recommendations for a specific website
       tags: [SEO Recommendations]

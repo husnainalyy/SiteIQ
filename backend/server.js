@@ -28,9 +28,9 @@ app.use(cors({
   origin: '*', // Or '*' for testing
   credentials: true
 }));
-//app.use(clerkMiddleware());
 
-app.use('/api/webhooks', express.raw({ type: 'application/json' })); // Raw body for webhooks
+app.use(clerkMiddleware());
+
 
 //middle wares 
 app.use(express.json()); // JSON for other routes
@@ -52,7 +52,8 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
-app.use('/api/history', historyRoutes);app.use("/api/techstack", techStackRoutes);
+app.use('/api/history', historyRoutes);
+app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
 app.use("/api/chat", chatRouter);
 
@@ -80,7 +81,7 @@ app.get('/openapi.json', (req, res) => {
 });
 
 
-
+  
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

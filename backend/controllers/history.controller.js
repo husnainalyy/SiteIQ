@@ -4,7 +4,7 @@ import WebsiteHistory from '../models/WebsiteHistory.js';
 // ✅ Get Full History of a User
 const getUserHistory = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.auth.userId;
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found." });

@@ -229,7 +229,9 @@ const deleteReport = async (req, res) => {
 
 const returnReport = async (req, res) => {
   const { jid } = req.params;
+
   console.log(req.auth.clerkUserId);
+
   if (!jid) {
     return res.status(400).json({ error: "Job ID not included in parameter" });
   }
@@ -264,6 +266,7 @@ const returnReport = async (req, res) => {
 };
 
 function scoreSeoResponse(rawResponse, keyword, domain) {
+
   const scores = {
     rankingPosition: 0,
     keywordRelevance: 0,

@@ -12,7 +12,7 @@ tags:
     description: Recommend or improve web tech stacks based on use case and performance/SEO priorities
 
 paths:
-  /techstack/recommend:
+  /api/techstack/recommend:
     post:
       summary: Recommend a new tech stack based on goals
       tags: [Tech Stack]
@@ -44,7 +44,7 @@ paths:
         '500':
           description: Recommendation process failed
 
-  /techstack/improve:
+  /api/techstack/improve:
     post:
       summary: Suggest improvements to an existing website’s tech stack
       tags: [Tech Stack]
