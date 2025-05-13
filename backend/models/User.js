@@ -52,28 +52,30 @@ const UserSchema = new mongoose.Schema(
     loginCount: { type: Number, default: 0, min: 0 },
 
     // Websites & Chat History
-    websites: [
-      {
-        url: {
-          type: String,
-          required: true,
-          match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
-        },
-        seoReport: { type: Object, default: {} },
-        seoRecommendations: [{ type: Object, default: {} }],
-        html: { type: String },
-        css: { type: String },
-        chatHistory: [
-          {
-            userMessage: { type: String, required: true, maxlength: 500 },
-            botResponse: { type: String, required: true, maxlength: 1000 },
-            timestamp: { type: Date, default: Date.now },
-          },
-        ],
-        chatCount: { type: Number, default: 0, min: 0, max: 15 },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+    // websites: [
+    //   {
+    //     url: {
+    //       type: String,
+    //       required: true,
+    //       match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
+    //     },
+    //     seoReport: { type: Object, default: {} },
+    //     seoRecommendations: [{ type: Object, default: {} }],
+    //     html: { type: String },
+    //     css: { type: String },
+    //     chatHistory: [
+    //       {
+    //         userMessage: { type: String, required: true, maxlength: 500 },
+    //         botResponse: { type: String, required: true, maxlength: 1000 },
+    //         timestamp: { type: Date, default: Date.now },
+    //       },
+    //     ],
+    //     chatCount: { type: Number, default: 0, min: 0, max: 15 },
+    //     createdAt: { type: Date, default: Date.now },
+    //   },
+    // ],
+
+
 
     // Weekly Website Limit
     weeklyWebsiteLimit: { type: Number, default: 3 },

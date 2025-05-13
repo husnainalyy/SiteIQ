@@ -36,6 +36,7 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
     const summary = responseData.summary || {};
 
     const organicEntries = Object.entries(results.organic || {});
+    
     const universalEntries = Object.entries(results.universal || {});
 
     const top10 = organicEntries
@@ -117,27 +118,28 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
 
 const generateAndScoreReport = async (req, res) => {
     const { phrase, domain } = req.body;
-    const { clerkUserId } = req.auth; // Assuming req.auth contains clerkUserId
+    const { clerkUserId } = req.auth;
 
     if (!phrase || !domain || !clerkUserId) {
         return res.status(400).json({ error: "Missing required fields (phrase, domain, clerkUserId)" });
     }
 
-    const maxAttempts = 20; // Max attempts to poll the API for readiness
-    const pollInterval = 5000; // Poll every 5 seconds
-
+    // Polling Intervals: Start slow, then speed up
+    const pollingIntervals = [30_000, 20_000, 15_000, 10_000]; // in ms
+    const maxAttempts = 20;
+    
     try {
-        // Step 1: Generate job ID from Authoritas API
         const { ts, hash } = generateAuthoritasHash({ publicKey, privateKey, salt });
+
         let jobResponse;
         try {
-             jobResponse = await axios.post(
+            jobResponse = await axios.post(
                 'https://v3.api.analyticsseo.com/serps/',
                 {
                     search_engine: "google",
-                    region: "global", // Consider making this dynamic if needed
-                    language: "en",   // Consider making this dynamic if needed
-                    max_results: 100, // Or another appropriate number
+                    region: "global",
+                    language: "en",
+                    max_results: 100,
                     phrase
                 },
                 {
@@ -148,13 +150,12 @@ const generateAndScoreReport = async (req, res) => {
                 }
             );
         } catch (apiError) {
-             console.error("Error initiating Authoritas job:", apiError.response?.data || apiError.message);
-             return res.status(500).json({
+            console.error("Error initiating Authoritas job:", apiError.response?.data || apiError.message);
+            return res.status(500).json({
                 error: "Failed to initiate Authoritas job",
                 details: apiError.response?.data || apiError.message
-             });
+            });
         }
-
 
         const jid = jobResponse.data.jid;
         console.log(`Authoritas job initiated with JID: ${jid}`);
@@ -165,8 +166,9 @@ const generateAndScoreReport = async (req, res) => {
         let rawResponse = null;
 
         while (!jobReady && currentAttempts < maxAttempts) {
+            const pollInterval = pollingIntervals[Math.min(currentAttempts, pollingIntervals.length - 1)];
             currentAttempts++;
-            console.log(`Polling job status for JID ${jid}, Attempt ${currentAttempts}`);
+            console.log(`Polling job status for JID ${jid}, Attempt ${currentAttempts} (wait ${pollInterval / 1000}s)`);
 
             try {
                 const { ts: pollTs, hash: pollHash } = generateAuthoritasHash({ publicKey, privateKey, salt });
@@ -181,103 +183,86 @@ const generateAndScoreReport = async (req, res) => {
                     jobReady = true;
                     rawResponse = pollResponse.data;
                     console.log(`Job ${jid} is ready.`);
+                    break;
                 } else {
                     console.log(`Job ${jid} not ready yet. Waiting...`);
-                    await new Promise(resolve => setTimeout(resolve, pollInterval)); // Wait before polling again
+                    await new Promise(resolve => setTimeout(resolve, pollInterval));
                 }
             } catch (pollError) {
                 console.error(`Error polling Authoritas job ${jid}:`, pollError.response?.data || pollError.message);
-                // Depending on the error, you might want to break or continue
-                // For now, let's assume transient errors and continue polling up to maxAttempts
-                 await new Promise(resolve => setTimeout(resolve, pollInterval)); // Wait before polling again
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
             }
         }
 
         if (!jobReady || !rawResponse) {
-            // Job didn't become ready within the allowed attempts
             console.error(`Authoritas job ${jid} did not become ready after ${maxAttempts} attempts.`);
-            return res.status(504).json({ // 504 Gateway Timeout or 500
+            return res.status(504).json({
                 error: "Authoritas job did not complete within the expected time. Please try fetching the report later using the jid.",
                 jid: jid,
-                status: "pending" // Indicate job might still be running on their end
+                status: "pending"
             });
         }
 
-        // Step 3: Calculate Score
-        console.log(`Scoring report for JID ${jid}, phrase "${phrase}", domain "${domain}"`);
+        // Step 3: Score
         const scores = scoreSeoResponse(rawResponse, phrase, domain);
-        console.log("Calculated Scores:", scores);
 
-
-        // Step 4: Find or Create Report in DB and Save Results + Scores
+        // Step 4: DB Save
         let report = await SeoReport.findOne({ clerkUserId, domain });
         let message;
 
         if (!report) {
-            // Create new report document
             report = await SeoReport.create({
                 clerkUserId,
                 domain,
-                scanDate: new Date(), // Add a scan date
+                scanDate: new Date(),
                 phraseResults: [{
                     phrase,
                     jid,
-                    rawResponse: rawResponse,
-                    scores: scores,
+                    rawResponse,
+                    scores,
                     updatedAt: new Date()
                 }]
             });
             message = "New report created with phrase and scores";
-            console.log("Created new report:", report._id);
-
         } else {
-            // Report exists, find or add phrase result
             const existingPhraseEntry = report.phraseResults.find(p => p.phrase === phrase);
-
             if (existingPhraseEntry) {
-                // Update existing phrase entry
-                existingPhraseEntry.jid = jid; // Update jid with the new one
+                existingPhraseEntry.jid = jid;
                 existingPhraseEntry.rawResponse = rawResponse;
                 existingPhraseEntry.scores = scores;
                 existingPhraseEntry.updatedAt = new Date();
                 message = "Existing phrase updated with new results and scores";
-                console.log(`Updated phrase "${phrase}" in report ${report._id}`);
-
             } else {
-                // Add new phrase entry
                 report.phraseResults.push({
                     phrase,
                     jid,
-                    rawResponse: rawResponse,
-                    scores: scores,
+                    rawResponse,
+                    scores,
                     updatedAt: new Date()
                 });
                 message = "New phrase added to existing report with results and scores";
-                 console.log(`Added new phrase "${phrase}" to report ${report._id}`);
             }
-
-            await report.save(); // Save the updated report document
+            await report.save();
         }
 
-        // Step 5: Respond to client
+        // Step 5: Return
         return res.status(200).json({
             message,
             jid,
             reportId: report._id,
-            phraseResult: report.phraseResults.find(p => p.jid === jid) // Return the specific phrase entry
+            phraseResult: report.phraseResults.find(p => p.jid === jid)
         });
 
     } catch (error) {
         console.error("Fatal Error in generateAndScoreReport:", error);
-        // Catch any unexpected errors
         return res.status(500).json({
             error: "An internal server error occurred while generating and scoring the report",
             details: error.message,
-             // Potentially include jid if it was successfully created before the error
-             jid: jobResponse?.data?.jid // Check if jobResponse was successful
+            jid: jobResponse?.data?.jid
         });
     }
 };
+
 
 const deleteReport = async (req, res) => {
   const { jid } = req.params;
