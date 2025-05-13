@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import axios from "axios";
 import dotenv from "dotenv";
+import incrementUsage from '../utils/incrementUsage.js';
 
 dotenv.config(); // Load environment variables
 
@@ -16,7 +17,7 @@ const generateSEORecommendations = async (req, res) => {
       });
     }
 
-    // ✅ NEW CHECK: Ensure seoReport is not empty or invalid
+    // NEW CHECK: Ensure seoReport is not empty or invalid
     if (
       typeof seoReport !== 'object' ||
       Object.keys(seoReport).length === 0
@@ -35,28 +36,19 @@ const generateSEORecommendations = async (req, res) => {
 
     // Format prompt for DeepSeek
     const prompt = `Analyze this SEO report in extreme detail and provide a prioritized list of high-impact, actionable recommendations to improve search rankings, traffic, and conversions. Cover the following with specificity:  
-
-1. **Technical SEO:** Identify crawl errors, indexability issues, site speed bottlenecks, mobile usability problems, or schema markup gaps. Recommend exact fixes (e.g., "Fix 500 errors on /cart page by debugging server logs").  
-
-2. **On-Page SEO:** Evaluate title tags, meta descriptions, headers, keyword usage, and content quality. Suggest optimizations (e.g., "Rewrite H1 to include primary keyword 'best running shoes' and match search intent").  
-
-3. **Content Gaps:** Highlight missing topics, low-quality pages, or underperforming content. Recommend updates, mergers, or deletions (e.g., "Merge /blog/post1 and /blog/post2 to avoid cannibalization").  
-
-4. **Backlinks:** Analyze referring domains, anchor text, and toxic links. Suggest disavow actions or link-building targets (e.g., "Acquire backlinks from .edu sites in the fitness niche via guest posts").  
-
-5. **UX/UI:** Identify poor navigation, high bounce rates, or CTA weaknesses. Propose fixes (e.g., "Add internal links from high-traffic pages to boost engagement").  
-
-6. **Competitor Gaps:** Compare top 3 competitors' strengths (e.g., "Competitor X ranks for 'organic protein powder'—create a better guide with video tutorials").  
-
-7. **Tracking & KPIs:** Ensure proper Google Analytics/GTM setup. Recommend tracking fixes (e.g., "Tag all campaign URLs with UTM parameters").  
-
-Format output as:  
-- **Priority Level (High/Medium/Low)**  
-- **Issue**  
-- **Actionable Recommendation**  
-- **Expected Impact**  
-
-Be brutally honest—omit fluff. Focus on steps that will move the needle within 3–6 months.:\n\n${JSON.stringify(
+    1. **Technical SEO:** Identify crawl errors, indexability issues, site speed bottlenecks, mobile usability problems, or schema markup gaps. Recommend exact fixes (e.g., "Fix 500 errors on /cart page by debugging server logs").  
+    2. **On-Page SEO:** Evaluate title tags, meta descriptions, headers, keyword usage, and content quality. Suggest optimizations (e.g., "Rewrite H1 to include primary keyword 'best running shoes' and match search intent").  
+    3. **Content Gaps:** Highlight missing topics, low-quality pages, or underperforming content. Recommend updates, mergers, or deletions (e.g., "Merge /blog/post1 and /blog/post2 to avoid cannibalization").  
+    4. **Backlinks:** Analyze referring domains, anchor text, and toxic links. Suggest disavow actions or link-building targets (e.g., "Acquire backlinks from .edu sites in the fitness niche via guest posts").  
+    5. **UX/UI:** Identify poor navigation, high bounce rates, or CTA weaknesses. Propose fixes (e.g., "Add internal links from high-traffic pages to boost engagement").  
+    6. **Competitor Gaps:** Compare top 3 competitors' strengths (e.g., "Competitor X ranks for 'organic protein powder'—create a better guide with video tutorials").  
+    7. **Tracking & KPIs:** Ensure proper Google Analytics/GTM setup. Recommend tracking fixes (e.g., "Tag all campaign URLs with UTM parameters").  
+    Format output as:  
+    - **Priority Level (High/Medium/Low)**  
+    - **Issue**  
+    - **Actionable Recommendation**  
+    - **Expected Impact**  
+    Be brutally honest—omit fluff. Focus on steps that will move the needle within 3–6 months.:\n\n${JSON.stringify(
       seoReport,
       null,
       2
@@ -112,6 +104,9 @@ Be brutally honest—omit fluff. Focus on steps that will move the needle within
       action: "Analyzed",
       websiteId: website._id, // Reference to the website's ObjectId
     });
+
+    // Increment usage count after successful operation
+    await incrementUsage(userId, 'seo');
 
     // Save the user document
     await user.save();
