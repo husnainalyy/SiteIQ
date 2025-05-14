@@ -113,7 +113,7 @@ User Preferences:
         try {
             parsedResponse = JSON.parse(jsonMatch[0]);
             detectRedundantDatabases(parsedResponse); // ✅ Check for overlap
-            console.log("✅ Parsed AI Response:", parsedResponse);
+          //   console.log("✅ Parsed AI Response:", parsedResponse);
             return parsedResponse;
         } catch (error) {
             console.error("❌ Failed to parse JSON. Raw extracted block:\n", jsonMatch[0]);

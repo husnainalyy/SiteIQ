@@ -1,32 +1,20 @@
-import express from "express";
+// controllers/techstackChatController.js
 import axios from "axios";
 import dotenv from "dotenv";
-import { createSession, getSession, sessionExists } from "../services/techstackSessionStore.js";
+import { getSession, sessionExists } from "../services/techstackSessionStore.js";
+import ChatSession from "../models/techstackChatModel.js";
 
 dotenv.config();
 
-const router = express.Router();
 const OR_API_KEY = process.env.OPENROUTER_API_KEY?.trim();
 const OR_MODEL_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Initial entry point for new session
-router.post("/start", (req, res) => {
-  const { mode } = req.body;
-
-  if (!mode || !["recommend", "improve"].includes(mode)) {
-    return res.status(400).json({ error: "Mode must be 'recommend' or 'improve'" });
-  }
-
-  const sessionId = createSession(mode);
-  res.json({ sessionId });
-});
-
-// Chat endpoint
-router.post("/chat", async (req, res) => {
+export async function handleImproveChat(req, res) {
   const { message, sessionId } = req.body;
+  const clerkUserId = req.auth?.userId; // Clerk user ID
 
-  if (!message || !sessionId) {
-    return res.status(400).json({ error: "Missing message or sessionId" });
+  if (!message || !sessionId || !clerkUserId) {
+    return res.status(400).json({ error: "Missing required fields or unauthenticated" });
   }
 
   if (!sessionExists(sessionId)) {
@@ -34,16 +22,15 @@ router.post("/chat", async (req, res) => {
   }
 
   const session = getSession(sessionId);
-  session.createdAt = Date.now(); // refresh session timeout
+  session.lastAccessed = Date.now();
 
   const contextPrompt = `
-You are a helpful AI assistant for a platform that recommends tech stacks for websites.
-Only answer questions related to:
-- frontend/backend stack choices
-- SEO and performance strategies
-- hosting, CI/CD, DevOps, databases
-Do not answer personal, irrelevant, or unrelated questions.
-Current Mode: ${session.mode === "recommend" ? "New Website Planning" : "Improving Existing Website"}
+You are a helpful AI assistant helping improve existing websites.
+Answer only questions related to:
+- improving frontend/backend stack
+- SEO and performance upgrades
+- hosting, CI/CD, databases, DevOps tools
+Ignore anything unrelated.
 `;
 
   const messages = [
@@ -73,11 +60,22 @@ Current Mode: ${session.mode === "recommend" ? "New Website Planning" : "Improvi
     session.history.push({ role: "user", content: message });
     session.history.push({ role: "assistant", content: aiReply });
 
+    // Save the chat session with Clerk User ID
+    await ChatSession.findOneAndUpdate(
+      { sessionId, clerkUserId },  // Use clerkUserId to link the chat session
+      {
+        clerkUserId,
+        sessionId,
+        mode: "improve",
+        history: session.history,
+        lastAccessed: Date.now()
+      },
+      { upsert: true }
+    );
+
     res.json({ reply: aiReply });
   } catch (error) {
-    console.error("Chat error:", error?.response?.data || error.message);
+    console.error("AI chat error:", error?.response?.data || error.message);
     res.status(500).json({ error: "AI chat failed" });
   }
-});
-
-export default router;
+}

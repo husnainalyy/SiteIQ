@@ -1,0 +1,61 @@
+components:
+  schemas:
+    PhraseResult:
+      type: object
+      properties:
+        phrase:
+          type: string
+        jid:
+          type: string
+        rawResponse:
+          type: object
+        scores:
+          type: object
+          properties:
+            rankingPosition:
+              type: number
+              example: 25
+            keywordRelevance:
+              type: number
+              example: 30
+            richSnippets:
+              type: number
+              example: 20
+            urlStructure:
+              type: number
+              example: 10
+            visibility:
+              type: number
+              example: 15
+            competitorAnalysis:
+              type: number
+              example: 10
+            paginationStrength:
+              type: number
+              example: 18
+            total:
+              type: number
+              example: 100
+
+    SeoReport:
+      type: object
+      properties:
+        _id:
+          type: string
+        clerkUserId:
+          type: string
+        domain:
+          type: string
+        scanDate:
+          type: string
+          format: date-time
+        phraseResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhraseResult'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
