@@ -1,58 +1,121 @@
 components:
   schemas:
-    PhraseResult:
+    ChatMessage:
       type: object
       properties:
-        phrase:
+        userMessage:
           type: string
-        jid:
+          maxLength: 500
+          example: "How can I improve SEO for my homepage?"
+        botResponse:
           type: string
-        rawResponse:
-          type: object
-        scores:
-          type: object
-          properties:
-            rankingPosition:
-              type: number
-              example: 25
-            keywordRelevance:
-              type: number
-              example: 30
-            richSnippets:
-              type: number
-              example: 20
-            urlStructure:
-              type: number
-              example: 10
-            visibility:
-              type: number
-              example: 15
-            competitorAnalysis:
-              type: number
-              example: 10
-            paginationStrength:
-              type: number
-              example: 18
-            total:
-              type: number
-              example: 100
-
-    SeoReport:
-      type: object
-      properties:
-        _id:
-          type: string
-        clerkUserId:
-          type: string
-        domain:
-          type: string
-        scanDate:
+          maxLength: 1000
+          example: "You can improve your SEO by adding meta tags, optimizing keywords, and improving page speed."
+        timestamp:
           type: string
           format: date-time
-        phraseResults:
+          example: "2025-05-09T12:34:56.789Z"
+
+    Website:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          example: "https://example.com"
+        seoReport:
+          $ref: "#/components/schemas/SeoReport"
+        seoRecommendations:
           type: array
           items:
-            $ref: '#/components/schemas/PhraseResult'
+            type: object
+        html:
+          type: string
+          description: Raw HTML of the website
+        css:
+          type: string
+          description: Raw CSS of the website
+        chatHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        chatCount:
+          type: number
+          example: 5
+        createdAt:
+          type: string
+          format: date-time
+
+    WebsiteHistory:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        seoReport:
+          $ref: "#/components/schemas/SeoReport"
+        seoRecommendations:
+          type: array
+          items:
+            type: object
+        action:
+          type: string
+          enum: [Analyzed, Updated, Deleted]
+        timestamp:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        image:
+          type: string
+          format: uri
+        isVerified:
+          type: boolean
+        membership:
+          type: string
+          enum: [premium, freemium]
+        stripe:
+          type: object
+          properties:
+            customerId:
+              type: string
+            subscriptionId:
+              type: string
+            isActive:
+              type: boolean
+            plan:
+              type: string
+              enum: [basic, pro, enterprise]
+        loginCount:
+          type: number
+        websites:
+          type: array
+          items:
+            $ref: "#/components/schemas/Website"
+        websiteHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebsiteHistory"
+        weeklyWebsiteLimit:
+          type: number
+        lastResetDate:
+          type: string
+          format: date-time
         createdAt:
           type: string
           format: date-time

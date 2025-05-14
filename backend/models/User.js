@@ -52,44 +52,30 @@ const UserSchema = new mongoose.Schema(
     loginCount: { type: Number, default: 0, min: 0 },
 
     // Websites & Chat History
-    websites: [
-      {
-        url: {
-          type: String,
-          required: true,
-          match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
-        },
-        seoReport: { type: Object, default: {} },
-        seoRecommendations: [{ type: Object, default: {} }],
-        html: { type: String },
-        css: { type: String },
-        chatHistory: [
-          {
-            userMessage: { type: String, required: true, maxlength: 500 },
-            botResponse: { type: String, required: true, maxlength: 1000 },
-            timestamp: { type: Date, default: Date.now },
-          },
-        ],
-        chatCount: { type: Number, default: 0, min: 0, max: 15 },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+    // websites: [
+    //   {
+    //     url: {
+    //       type: String,
+    //       required: true,
+    //       match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
+    //     },
+    //     seoReport: { type: Object, default: {} },
+    //     seoRecommendations: [{ type: Object, default: {} }],
+    //     html: { type: String },
+    //     css: { type: String },
+    //     chatHistory: [
+    //       {
+    //         userMessage: { type: String, required: true, maxlength: 500 },
+    //         botResponse: { type: String, required: true, maxlength: 1000 },
+    //         timestamp: { type: Date, default: Date.now },
+    //       },
+    //     ],
+    //     chatCount: { type: Number, default: 0, min: 0, max: 15 },
+    //     createdAt: { type: Date, default: Date.now },
+    //   },
+    // ],
 
-    // 🔹 Website History (Newly Added)
-    websiteHistory: [
-      {
-        id: { type: String, required: true }, 
-        url: { type: String, required: true },
-        seoReport: { type: Object, default: {} },
-        seoRecommendations: [{ type: Object, default: {} }],
-        action: {
-          type: String,
-          enum: ["Analyzed", "Updated", "Deleted"],
-          required: true,
-        },
-        timestamp: { type: Date, default: Date.now },
-      },
-    ],
+
 
     // Weekly Website Limit
     weeklyWebsiteLimit: { type: Number, default: 3 },
@@ -104,7 +90,6 @@ const UserSchema = new mongoose.Schema(
 // 💡 Model Methods
 /////////////////////////////
 
-// 🔄 Reset Weekly Website Limit
 UserSchema.methods.resetWebsiteLimit = async function () {
   const now = new Date();
   const lastReset = new Date(this.lastResetDate);
@@ -117,7 +102,6 @@ UserSchema.methods.resetWebsiteLimit = async function () {
   }
 };
 
-// 🔄 Check if User Can Add a Website
 UserSchema.methods.canAddWebsite = async function () {
   await this.resetWebsiteLimit();
   return (
@@ -126,7 +110,6 @@ UserSchema.methods.canAddWebsite = async function () {
   );
 };
 
-// 🔄 Add Website and Generate Vector
 UserSchema.methods.addWebsiteAndGenerateVector = async function (
   url,
   seoReport,
@@ -138,7 +121,6 @@ UserSchema.methods.addWebsiteAndGenerateVector = async function (
     throw new Error("Freemium users can only analyze 3 websites per week.");
   }
 
-  // Add website to user's data
   this.websites.push({
     url,
     seoReport,
@@ -149,7 +131,6 @@ UserSchema.methods.addWebsiteAndGenerateVector = async function (
   });
   await this.save();
 
-  // Generate and store vector
   const website = this.websites.find((site) => site.url === url);
   if (website) {
     await this.generateWebsiteVector(website);
@@ -158,7 +139,6 @@ UserSchema.methods.addWebsiteAndGenerateVector = async function (
   return this;
 };
 
-// 🔄 Generate Website Vector
 UserSchema.methods.generateWebsiteVector = async function (website) {
   try {
     const embeddings = new OpenAIEmbeddings({
@@ -166,15 +146,13 @@ UserSchema.methods.generateWebsiteVector = async function (website) {
     });
     const textData = this.createWebsiteTextData(website);
 
-    // Generate vector embedding
     const vector = await embeddings.embedQuery(textData);
 
-    // Store in `website_vectors` collection
     await WebsiteVector.findOneAndUpdate(
       { websiteUrl: website.url },
       {
         embeddings: vector,
-        textData: textData, // Store raw text for debugging
+        textData: textData,
       },
       { upsert: true, new: true }
     );
@@ -186,41 +164,35 @@ UserSchema.methods.generateWebsiteVector = async function (website) {
   }
 };
 
-// 📝 Create Website Text Data for Embeddings
 UserSchema.methods.createWebsiteTextData = function (website) {
   return `
         URL: ${website.url}
         SEO: ${JSON.stringify(website.seoReport)}
         Recommendations: ${JSON.stringify(website.aiRecommendations)}
-        HTML: ${website.html?.substring(0, 5000)} // Limit size
+        HTML: ${website.html?.substring(0, 5000)}
         CSS: ${website.css?.substring(0, 5000)}
     `;
 };
 
-// 🔄 Update Website Data
 UserSchema.methods.updateWebsiteData = async function (websiteUrl, updateData) {
   const website = this.websites.find((site) => site.url === websiteUrl);
   if (!website) throw new Error("Website not found");
 
-  // Update fields
   Object.keys(updateData).forEach((key) => {
     if (key in website) website[key] = updateData[key];
   });
 
-  // Regenerate vector
   await this.generateWebsiteVector(website);
   await this.save();
   return this;
 };
 
-// 🔄 Check if User Can Send a Message
 UserSchema.methods.canSendMessage = function (websiteUrl) {
   const website = this.websites.find((site) => site.url === websiteUrl);
   if (!website) throw new Error("Website not found.");
   return website.chatCount < 15;
 };
 
-// 🔄 Save Chat Message
 UserSchema.methods.saveChatMessage = async function (
   websiteUrl,
   userMessage,

@@ -10,7 +10,7 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
-        "@clerk/clerk-sdk-node": "^4.0.0",
+        "@clerk/express": "^1.4.16",
         "@langchain/community": "^0.3.36",
         "@langchain/mongodb": "^0.1.0",
         "@langchain/openai": "^0.4.5",
@@ -23,6 +23,7 @@
         "express": "^4.21.2",
         "langchain": "^0.3.19",
         "mongoose": "^8.13.0",
+        "mongoose": "^8.13.0",
         "siteiq-backend": "file:",
         "stripe": "^18.1.0",
         "svix": "^1.62.0",
@@ -30,6 +31,6 @@
         "swagger-ui-express": "^5.0.1"
     },
     "devDependencies": {
-        "nodemon": "^3.0.2"
+        "nodemon": "^3.1.10"
     }
 }

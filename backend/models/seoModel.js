@@ -17,7 +17,6 @@
       total: { type: Number, default: 0 }
     } 
   });
-  
 
   const SeoSchema = new mongoose.Schema(
     { 
@@ -28,7 +27,11 @@
     },
     { timestamps: true }
   );
+
   const SeoReport = mongoose.model("SeoReport", SeoSchema);
 
 
-  export default SeoReport;
+  export default SeoReport; 
+
+  // aik user multiple website, har website ki multiple recommendation,
+  // 
