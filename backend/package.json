@@ -23,7 +23,6 @@
         "express": "^4.21.2",
         "langchain": "^0.3.19",
         "mongoose": "^8.13.0",
-        "mongoose": "^8.13.0",
         "siteiq-backend": "file:",
         "stripe": "^18.1.0",
         "svix": "^1.62.0",

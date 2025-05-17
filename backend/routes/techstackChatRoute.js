@@ -1,26 +1,17 @@
 // routes/techstackChatRoutes.js
 import express from "express";
-import { createSession } from "../services/techstackSessionStore.js";
-import { handleImproveChat } from "../controllers/techstackChatController.js";
-import { requireAuth } from "@clerk/clerk-sdk-node";
+import { handleImproveChat, getMessagesByConversation } from "../controllers/techstackChatController.js";
+import mockClerkAuth from "../middleware/testclerkauth.js"; // Mock authentication middleware
 
 const router = express.Router();
 
-// Create a session (only for 'improve' mode)
-router.post("/start", requireAuth, (req, res) => {
-  const { mode } = req.body;
+// Use the mockClerkAuth middleware to authenticate users
+router.use(mockClerkAuth);
 
-  if (mode !== "improve") {
-    return res.status(400).json({ error: "Only 'improve' mode supports chat" });
-  }
+// Route to handle chat improvement (send message and get AI reply)
+router.post("/chat", handleImproveChat);
 
-  const sessionId = createSession(mode);
-  res.json({ sessionId });
-});
-
-// Chat endpoint
-router.post("/chat", requireAuth, handleImproveChat);
+// Route to fetch messages by conversationId
+router.get("/chat/:conversationId", getMessagesByConversation);
 
 export default router;
-// This route handles chat interactions for the 'improve' mode.
-// It requires authentication and uses the session ID to manage chat history.

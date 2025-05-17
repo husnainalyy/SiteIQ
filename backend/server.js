@@ -9,17 +9,10 @@ import { clerkMiddleware } from '@clerk/express'
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { apiReference } from '@scalar/express-api-reference';
-// imports for swagger 
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './swagger.js';
-import { apiReference } from '@scalar/express-api-reference';
 
 // Import routes
 import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
-import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
-import historyRoutes from './routes/history.routes.js';
-import seoRoutes from './routes/seoRoutes.js';
 import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
 import historyRoutes from './routes/history.routes.js';
 import seoRoutes from './routes/seoRoutes.js';
@@ -35,7 +28,7 @@ const PORT = process.env.PORT || 4500;
 
 // Middleware
 app.use(cors({
-  origin: '*', // Or '*' for testing
+  origin: 'http://localhost:3000', // Or '*' for testing
   credentials: true
 }));
 
@@ -48,8 +41,6 @@ app.use(express.json()); // JSON for other routes
 app.use('/api/webhooks', express.raw({ type: 'application/json' })); // Raw body for webhooks
 app.use("/api/chat", techstackChatRoutes);
 app.use('/api/stripe', stripeRoutes); // Mount Stripe routes
-app.use("/api/userchat", userChatRoutes);
-
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -71,7 +62,8 @@ app.use('/api/seoreports', seoRoutes); // Mount webhook routes
 app.use('/api/history', historyRoutes);
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use("/api/chat", chatRouter);
+app.use("/api/userchat", userChatRoutes);
+
 
 
 
