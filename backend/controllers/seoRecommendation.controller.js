@@ -1,60 +1,52 @@
-import User from "../models/User.js";
 import axios from "axios";
-import dotenv from "dotenv";
-import incrementUsage from '../utils/incrementUsage.js';
+import SeoReport from "../models/seoModel.js";
+import SeoRecommendation from "../models/seoRecommendation.js";
 
-dotenv.config(); // Load environment variables
-
-// ✅ CREATE: Generate and add a new SEO recommendation to the array
+// ✅ CREATE
 const generateSEORecommendations = async (req, res) => {
   try {
-    const { userId, websiteUrl, seoReport } = req.body;
+    console.log("✅ Step 1: Extracting user ID from auth...");
+    const clerkUserId = req.auth.userId;
+    console.log(clerkUserId);
 
-    // Initial required fields check
-    if (!userId || !websiteUrl || !seoReport) {
-      return res.status(400).json({
-        error: "Missing required fields (userId, websiteUrl, seoReport).",
+    if (!req.auth || !req.auth.userId) {
+      console.warn("❌ Missing auth context.");
+      return res.status(401).json({ error: "Unauthrized" });
+    }
+
+    console.log("✅ Step 2: Extracting domain from request body...");
+    const { domain } = req.body;
+
+    if (!domain) {
+      console.warn("❌ Missing required field: domain.");
+      return res.status(400).json({ error: "Missing required field: domain." });
+    }
+
+    console.log("✅ Step 3: Searching for SEO report in DB...");
+    const seoReportDoc = await SeoReport.findOne({ clerkUserId, domain });
+    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
+
+    if (!seoReportDoc || !seoReportDoc.phraseResults || seoReportDoc.phraseResults.length === 0) {
+      console.warn("❌ SEO report not found or empty.");
+      return res.status(404).json({
+        error: "SEO report not found or contains no phrase results.",
       });
     }
 
-    // NEW CHECK: Ensure seoReport is not empty or invalid
-    if (
-      typeof seoReport !== 'object' ||
-      Object.keys(seoReport).length === 0
-    ) {
-      return res.status(400).json({
-        error: "SEO Report is empty or invalid. Cannot generate recommendations.",
-      });
-    }
-
-    // Validate API Key
+    console.log("✅ Step 4: Validating Novita API key...");
     const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
     if (!NOVITA_API_KEY) {
-      console.error("Missing Novita AI API key. Set NOVITA_API_KEY in .env.");
+      console.error("❌ Missing Novita API key in environment variables.");
       return res.status(500).json({ error: "Server configuration error." });
     }
 
-    // Format prompt for DeepSeek
-    const prompt = `Analyze this SEO report in extreme detail and provide a prioritized list of high-impact, actionable recommendations to improve search rankings, traffic, and conversions. Cover the following with specificity:  
-    1. **Technical SEO:** Identify crawl errors, indexability issues, site speed bottlenecks, mobile usability problems, or schema markup gaps. Recommend exact fixes (e.g., "Fix 500 errors on /cart page by debugging server logs").  
-    2. **On-Page SEO:** Evaluate title tags, meta descriptions, headers, keyword usage, and content quality. Suggest optimizations (e.g., "Rewrite H1 to include primary keyword 'best running shoes' and match search intent").  
-    3. **Content Gaps:** Highlight missing topics, low-quality pages, or underperforming content. Recommend updates, mergers, or deletions (e.g., "Merge /blog/post1 and /blog/post2 to avoid cannibalization").  
-    4. **Backlinks:** Analyze referring domains, anchor text, and toxic links. Suggest disavow actions or link-building targets (e.g., "Acquire backlinks from .edu sites in the fitness niche via guest posts").  
-    5. **UX/UI:** Identify poor navigation, high bounce rates, or CTA weaknesses. Propose fixes (e.g., "Add internal links from high-traffic pages to boost engagement").  
-    6. **Competitor Gaps:** Compare top 3 competitors' strengths (e.g., "Competitor X ranks for 'organic protein powder'—create a better guide with video tutorials").  
-    7. **Tracking & KPIs:** Ensure proper Google Analytics/GTM setup. Recommend tracking fixes (e.g., "Tag all campaign URLs with UTM parameters").  
-    Format output as:  
-    - **Priority Level (High/Medium/Low)**  
-    - **Issue**  
-    - **Actionable Recommendation**  
-    - **Expected Impact**  
-    Be brutally honest—omit fluff. Focus on steps that will move the needle within 3–6 months.:\n\n${JSON.stringify(
-      seoReport,
-      null,
-      2
-    )}`;
+    console.log("✅ Step 5: Extracting and trimming scores array...");
+    const scoresArray = seoReportDoc.phraseResults.map(r => r.scores).slice(0, 10); // limit to top 10
 
-    // Call DeepSeek-V3 via Novita AI's API
+    console.log("✅ Step 6: Constructing prompt...");
+    const prompt = `Analyze this SEO report in extreme detail and provide a prioritized list of high-impact, actionable recommendations... \n\n${JSON.stringify(scoresArray, null, 2)}`;
+
+    console.log("✅ Step 7: Sending request to Novita AI...");
     const response = await axios.post(
       "https://api.novita.ai/v3/openai/chat/completions",
       {
@@ -72,147 +64,267 @@ const generateSEORecommendations = async (req, res) => {
     );
 
     if (!response.data.choices || response.data.choices.length === 0) {
-      return res
-        .status(500)
-        .json({ error: "AI model returned an empty response." });
+      console.error("❌ AI model returned empty response.");
+      return res.status(500).json({ error: "AI model returned an empty response." });
     }
 
-    // Extract AI-generated recommendations
-    const seoRecommendation = response.data.choices[0].message.content.trim();
+    console.log("✅ Step 8: Extracting recommendation text...");
+    const seoRecommendationText = response.data.choices[0].message.content.trim();
 
-    // Find the user and website
-    const user = await User.findOne({ _id: userId });
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    const website = user.websites.find((site) => site.url === websiteUrl);
-    if (!website) {
-      return res.status(404).json({ error: "Website not found." });
-    }
-
-    // Determine the next sequential history id
-    const lastHistoryEntry = user.websiteHistory.length > 0 ? user.websiteHistory[user.websiteHistory.length - 1] : null;
-    const nextHistoryId = lastHistoryEntry ? lastHistoryEntry.id + 1 : 1;  // Default to 1 if no previous entry
-
-    // Add to website history
-    user.websiteHistory.push({
-      id: nextHistoryId,  // Sequential ID
-      url: websiteUrl,
-      seoReport: seoReport,
-      seoRecommendations: [seoRecommendation], // Store the new recommendation
+    console.log("✅ Step 9: Saving recommendation to database...");
+    const newRecommendation = new SeoRecommendation({
+      clerkUserId,
+      domain,
+      seoReport: seoReportDoc._id,
+      recommendations: {
+        seo: seoRecommendationText,
+        lighthouse: "" // Leave empty or null for now if you're only generating SEO
+      },
       action: "Analyzed",
-      websiteId: website._id, // Reference to the website's ObjectId
     });
-
-    // Increment usage count after successful operation
-    await incrementUsage(userId, 'seo');
-
-    // Save the user document
-    await user.save();
-
+    
+    await newRecommendation.save();
+    
+    console.log("✅ Step 10: Successfully saved and responding to client.");
     return res.status(200).json({
-      message: "SEO recommendation added successfully",
-      seoRecommendation,
+      message: "SEO recommendation generated and saved successfully.",
+      recommendation: {
+        seo: seoRecommendationText
+      }
     });
+    
   } catch (error) {
-    console.error("Error generating SEO recommendations:", error);
+    console.error("❌ Error generating SEO recommendations:", error.response?.data || error.message || error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 
-// ✅ READ: Get all SEO recommendations for all websites of a user
-const getAllSEORecommendations = async (req, res) => {
+const generateLightHouseRecommendation = async (req, res) => {
   try {
-    const { userId } = req.params;
+    console.log("✅ Step 1: Extracting user ID from auth...");
+    const clerkUserId = req.auth.userId;
+    console.log(clerkUserId);
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    if (!req.auth || !req.auth.userId) {
+      console.warn("❌ Missing auth context.");
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const recommendations = user.websites.map((website) => ({
-      websiteUrl: website.url,
-      seoRecommendations: website.seoRecommendations || [],
-    }));
+    console.log("✅ Step 2: Extracting domain from request body...");
+    const { domain } = req.body;
 
+    if (!domain) {
+      console.warn("❌ Missing required field: domain.");
+      return res.status(400).json({ error: "Missing required field: domain." });
+    }
+
+    console.log("✅ Step 3: Searching for Lighthouse report in DB...");
+    const seoReportDoc = await SeoReport.findOne({ clerkUserId, domain });
+    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
+
+    if (!seoReportDoc || !seoReportDoc.lighthouse) {
+      console.warn("❌ Lighthouse report not found.");
+      return res.status(404).json({
+        error: "Lighthouse report not found.",
+      });
+    }
+
+    console.log("✅ Step 4: Validating Novita API key...");
+    const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
+    if (!NOVITA_API_KEY) {
+      console.error("❌ Missing Novita API key in environment variables.");
+      return res.status(500).json({ error: "Server configuration error." });
+    }
+
+    console.log("✅ Step 5: Extracting Lighthouse data...");
+    const lighthouseData = seoReportDoc.lighthouseResult;
+    const simplifiedData = {
+      performance: null,
+      accessibility: null,
+      bestPractices: null,
+      seo: null,
+      audits: {}
+    };
+    
+    try {
+      // Handle different Lighthouse result formats
+      const categories = lighthouseData?.categories || 
+                       lighthouseData?.lhr?.categories || 
+                       {};
+      
+      simplifiedData.performance = categories.performance?.score ?? 
+                                 categories['performance']?.score ?? 
+                                 null;
+      
+      simplifiedData.accessibility = categories.accessibility?.score ?? 
+                                   categories['accessibility']?.score ?? 
+                                   null;
+      
+      simplifiedData.bestPractices = categories['best-practices']?.score ?? 
+                                    categories['bestPractices']?.score ?? 
+                                    null;
+      
+      simplifiedData.seo = categories.seo?.score ?? 
+                          categories['seo']?.score ?? 
+                          null;
+    
+      // Handle audits data
+      const audits = lighthouseData?.audits || 
+                    lighthouseData?.lhr?.audits || 
+                    {};
+      
+      simplifiedData.audits = Object.keys(audits)
+        .filter(key => audits[key]?.score !== null && audits[key]?.score !== undefined)
+        .reduce((obj, key) => {
+          obj[key] = {
+            title: audits[key]?.title || 'Untitled audit',
+            description: audits[key]?.description || 'No description available',
+            score: audits[key]?.score,
+            displayValue: audits[key]?.displayValue || 'N/A'
+          };
+          return obj;
+        }, {});
+    
+    } catch (error) {
+      console.error('Error processing Lighthouse data:', error);
+      // Return at least the basic structure even if processing fails
+    }
+    
+    // Now use simplifiedData in your prompt
+    console.log('Processed Lighthouse data:', simplifiedData);
+
+    console.log("✅ Step 6: Constructing prompt...");
+    const prompt = `Analyze this Lighthouse report in detail and provide specific technical recommendations to improve the website performance, accessibility, best practices, and SEO. 
+    Focus on actionable items sorted by priority (high impact first). 
+    For each recommendation, include: 
+    1. The specific issue
+    2. Why it matters
+    3. How to fix it
+    
+    Lighthouse Data:
+    ${JSON.stringify(simplifiedData, null, 2)}`;
+
+    console.log("✅ Step 7: Sending request to Novita AI...");
+    const response = await axios.post(
+      "https://api.novita.ai/v3/openai/chat/completions",
+      {
+        model: "deepseek/deepseek_v3",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000, // Increased for more detailed technical recommendations
+        stream: false,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${NOVITA_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.data.choices || response.data.choices.length === 0) {
+      console.error("❌ AI model returned empty response.");
+      return res.status(500).json({ error: "AI model returned an empty response." });
+    }
+
+    console.log("✅ Step 8: Extracting recommendation text...");
+    const lighthouseRecommendationText = response.data.choices[0].message.content.trim();
+
+    console.log("✅ Step 9: Saving recommendation to database...");
+    const newRecommendation = new SeoRecommendation({
+      clerkUserId,
+      domain,
+      seoReport: seoReportDoc._id,
+      recommendations: {
+        lighthouse: lighthouseRecommendationText,
+        seo: "" // Leave empty as this is Lighthouse-specific
+      },
+      action: "Analyzed",
+    });
+
+    await newRecommendation.save();
+
+    console.log("✅ Step 10: Successfully saved and responding to client.");
+    return res.status(200).json({
+      message: "Lighthouse recommendation generated and saved successfully.",
+      recommendation: {
+        lighthouse: lighthouseRecommendationText
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Error generating Lighthouse recommendations:", error.response?.data || error.message || error);
+    return res.status(500).json({ 
+      error: "Internal Server Error",
+      details: error.message 
+    });
+  }
+};
+
+// 📄 READ ALL recommendations for a user
+const getAllRecommendations = async (req, res) => {
+  try {
+    const clerkUserId = req.auth?.userId;
+    if (!clerkUserId) return res.status(401).json({ error: "Unauthorized" });
+
+    const recommendations = await SeoRecommendation.find({ clerkUserId }).sort({ createdAt: -1 });
     return res.status(200).json(recommendations);
   } catch (error) {
-    console.error("Error fetching SEO recommendations:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Failed to fetch recommendations." });
   }
 };
 
-// ✅ READ: Get all SEO recommendations for a specific website
-const getSEORecommendationByWebsite = async (req, res) => {
+// 📄 READ ONE recommendation by ID
+const getRecommendationById = async (req, res) => {
   try {
-    const { userId, websiteUrl } = req.params;
+    const { id } = req.params;
+    const recommendation = await SeoRecommendation.findById(id);
+    if (!recommendation) return res.status(404).json({ error: "Recommendation not found." });
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    const website = user.websites.find((site) => site.url === websiteUrl);
-    if (!website) {
-      return res.status(404).json({ error: "Website not found." });
-    }
-
-    return res.status(200).json({
-      websiteUrl: website.url,
-      seoRecommendations: website.seoRecommendations || [],
-    });
+    return res.status(200).json(recommendation);
   } catch (error) {
-    console.error("Error fetching SEO recommendation:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Failed to fetch recommendation." });
   }
 };
 
-// ✅ DELETE: Remove a specific SEO recommendation from a website
-const deleteSEORecommendation = async (req, res) => {
+// ✏️ UPDATE a recommendation's action or notes
+const updateRecommendation = async (req, res) => {
   try {
-    const { userId, websiteUrl } = req.params;
+    const { id } = req.params;
+    const { action, notes } = req.body;
 
-    // Find the user and the website
-    const user = await User.findOne({
-      _id: userId,
-      "websites.url": websiteUrl,
-    });
-    if (!user) {
-      return res.status(404).json({ error: "User or website not found." });
-    }
+    const updated = await SeoRecommendation.findByIdAndUpdate(
+      id,
+      { action, notes },
+      { new: true }
+    );
 
-    // Find the correct website entry
-    const website = user.websites.find((site) => site.url === websiteUrl);
-    if (
-      !website ||
-      !website.seoRecommendations ||
-      website.seoRecommendations.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({ error: "No SEO recommendations to delete." });
-    }
-
-    // Remove the last recommendation from the array
-    website.seoRecommendations.pop();
-
-    // Save the updated user document
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: "Last SEO recommendation deleted successfully." });
+    if (!updated) return res.status(404).json({ error: "Recommendation not found." });
+    return res.status(200).json(updated);
   } catch (error) {
-    console.error("Error deleting SEO recommendation:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Failed to update recommendation." });
+  }
+};
+
+// ❌ DELETE a recommendation
+const deleteRecommendation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await SeoRecommendation.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Recommendation not found." });
+
+    return res.status(200).json({ message: "Recommendation deleted." });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to delete recommendation." });
   }
 };
 
 export {
   generateSEORecommendations,
-  getAllSEORecommendations,
-  getSEORecommendationByWebsite,
-  deleteSEORecommendation,
+  generateLightHouseRecommendation,
+  getAllRecommendations,
+  getRecommendationById,
+  updateRecommendation,
+  deleteRecommendation,
 };
