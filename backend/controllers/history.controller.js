@@ -4,9 +4,11 @@ import WebsiteHistory from '../models/WebsiteHistory.js';
 // ✅ CREATE a new website history record
 const createHistory = async (req, res) => {
   try {
-    const { userId, url, seoReport, seoRecommendations, action } = req.body;
+    const clerkUserId = req.auth.userId;
 
-    if (!userId || !url || !action) {
+    const { url, seoReport, seoRecommendations, action } = req.body;
+
+    if (!clerkUserId || !url || !action) {
       return res.status(400).json({ error: 'userId, url, and action are required.' });
     }
 
@@ -29,9 +31,11 @@ const createHistory = async (req, res) => {
 // 📄 READ ALL histories for a user
 const getUserHistory = async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    const history = await WebsiteHistory.find({ userId }).sort({ createdAt: -1 });
+    const clerkUserId = req.auth.userId;
+    if (!clerkUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const history = await WebsiteHistory.find({ clerkUserId }).sort({ createdAt: -1 });
 
     if (!history.length) {
       return res.status(404).json({ error: 'No history found for this user.' });

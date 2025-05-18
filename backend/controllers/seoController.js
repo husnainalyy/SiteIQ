@@ -256,6 +256,8 @@ const generateAndScoreReport = async (req, res) => {
             phraseResult: report.phraseResults.find(p => p.jid === jid)
         });
 
+        
+
     } catch (error) {
         console.error("Fatal Error in generateAndScoreReport:", error);
         return res.status(500).json({
