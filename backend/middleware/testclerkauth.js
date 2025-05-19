@@ -1,9 +1,8 @@
 const mockClerkAuth = (req, res, next) => {
   // Simulating Clerk authentication
   req.auth = { 
-    userId: "clerk_user_1234567" // Your test user ID
+    userId: "clerk_user_12345" // Your test user ID
   };
-
   next();
 };
 

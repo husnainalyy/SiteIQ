@@ -1,8 +1,6 @@
 import express from "express";
-import { recommendStack, improveStack } from "../controllers/techstackcontroller.js"
-
-
-import mockClerkAuth from "../middleware/testclerkauth.js";
+import { recommendStack, improveStack } from "../controllers/techStackController.js"
+import mockClerkAuth from "../middleware/testclerkauth.js"; // Mock authentication middleware
 const router = express.Router();
 
 router.use(mockClerkAuth);
