@@ -120,7 +120,8 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
 
 const generateAndScoreReport = async (req, res) => {
     const { phrase, domain } = req.body;
-    const { clerkUserId } = req.auth;
+    const clerkUserId = req.auth.userId;
+
 
     if (!phrase || !domain || !clerkUserId) {
         return res.status(400).json({ error: "Missing required fields (phrase, domain, clerkUserId)" });
@@ -254,6 +255,8 @@ const generateAndScoreReport = async (req, res) => {
             reportId: report._id,
             phraseResult: report.phraseResults.find(p => p.jid === jid)
         });
+
+        
 
     } catch (error) {
         console.error("Fatal Error in generateAndScoreReport:", error);

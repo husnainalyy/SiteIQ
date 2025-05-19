@@ -1,24 +1,53 @@
+// routes/seoRecommendation.routes.js
+
 import express from 'express';
-import { 
-    generateSEORecommendations, 
-    getAllSEORecommendations, 
-    getSEORecommendationByWebsite, 
-    deleteSEORecommendation 
-} from '../controllers/seoRecommendation.controller.js';
+
+import mockClerkAuth from "../middleware/testclerkauth.js";
 import checkSubscriptionLimit from '../middleware/checkSubscriptionLimit.js';
+import incrementUsage from '../utils/incrementUsage.js';
+
+import {
+  generateSEORecommendations,
+  generateLightHouseRecommendation,
+  getAllRecommendations,
+  getRecommendationById,
+  updateRecommendation,
+  deleteRecommendation,
+} from '../controllers/seoRecommendation.controller.js';
 
 const router = express.Router();
 
-// Create (Generate recommendations)
-router.post('/generate', checkSubscriptionLimit, generateSEORecommendations); // Apply middleware here
+// Middleware to simulate authentication (for testing)
+router.use(mockClerkAuth);
 
-// Read (Get all recommendations for a user)
-router.get('/:userId', checkSubscriptionLimit, getAllSEORecommendations); // Apply middleware here
+// CREATE (Generate recommendations) with usage limit + increment
+router.post(
+    '/generate',
+    checkSubscriptionLimit('seo'),  
+    async (req, res, next) => {
+      await incrementUsage(req.auth.userId, 'seo');  // call utility
+      next();
+    },
+    generateSEORecommendations
+  );
+  
 
-// Read (Get recommendations for a specific website)
-router.get('/:userId/:websiteUrl', checkSubscriptionLimit, getSEORecommendationByWebsite); // Apply middleware here
+router.post(
+    '/generate-lighthouse',
+    generateLightHouseRecommendation      
+  );
+  
 
-// Delete (Remove recommendations for a website)
-router.delete('/:userId/:websiteUrl', checkSubscriptionLimit, deleteSEORecommendation); // Apply middleware here
+// READ ALL recommendations for user
+router.get('/', getAllRecommendations);
+
+// READ ONE recommendation by ID
+router.get('/:id', getRecommendationById);
+
+// UPDATE a recommendation by ID
+router.put('/:id', updateRecommendation);
+
+// DELETE a recommendation by ID
+router.delete('/:id', deleteRecommendation);
 
 export default router;

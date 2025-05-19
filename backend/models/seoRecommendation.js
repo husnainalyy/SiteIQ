@@ -1,37 +1,39 @@
 import mongoose from "mongoose";
 
-const SeoRecommendationSchema = new mongoose.Schema(
+const seoRecommendationSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    clerkUserId: {
+      type: String,
+      ref: "User", // Reference to User model
       required: true,
     },
-    websiteUrl: {
+    domain: {
       type: String,
       required: true,
-      match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
     },
     seoReport: {
-      type: Object,
-      default: {},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SeoReport", // Reference to SeoReport model
+      required: true,
+      unique: true // Ensures only one entry per report
     },
     recommendations: {
-      type: [Object], // Array of key-value structured recommendations
-      default: [],
+      lighthouse: {
+        type: String,
+      },
+      seo: {
+        type: String,
+      }
     },
-    htmlSnapshot: {
+    action: {
       type: String,
-    },
-    cssSnapshot: {
-      type: String,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
+      enum: ["Analyzed", "In Progress", "Completed", "Failed"],
+      default: "Analyzed",
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SeoRecommendation", SeoRecommendationSchema);
+const SeoRecommendation = mongoose.model("SeoRecommendation", seoRecommendationSchema);
+
+export default SeoRecommendation;

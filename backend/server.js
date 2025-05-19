@@ -15,9 +15,11 @@ import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
 import historyRoutes from './routes/history.routes.js';
+import lighthouseRoutes from "./routes/lightHouse.routes.js";
 import seoRoutes from './routes/seoRoutes.js';
 import techStackRoutes from './routes/techstackroute.js';
 import chatRouter from './routes/techstackChatRouter.js';
+
 
 // Initialize Express
 const app = express();
@@ -53,6 +55,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
 app.use('/api/history', historyRoutes);
+app.use("/api/lighthouse", lighthouseRoutes);
+
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
 app.use("/api/chat", chatRouter);

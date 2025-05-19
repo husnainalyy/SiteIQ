@@ -1,79 +1,113 @@
-import User from '../models/User.js';
+// controllers/websiteHistoryController.js
 import WebsiteHistory from '../models/WebsiteHistory.js';
 
-// ✅ Get Full History of a User
-const getUserHistory = async (req, res) => {
+// ✅ CREATE a new website history record
+const createHistory = async (req, res) => {
   try {
-    const { userId } = req.auth. clerkUserId;
+    const clerkUserId = req.auth.userId;
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found." });
+    const { url, seoReport, seoRecommendations, action } = req.body;
 
-    const history = await WebsiteHistory.find({ userId });
-    return res.status(200).json({ history });
-  } catch (error) {
-    console.error("Error fetching user history:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-// ✅ Get History for a Specific Website
-const getWebsiteHistory = async (req, res) => {
-  try {
-    const { userId, websiteUrl } = req.params;
-
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    const history = await WebsiteHistory.find({ userId, url: websiteUrl });
-    return res.status(200).json({ history });
-  } catch (error) {
-    console.error("Error fetching website history:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-// ✅ Clear Entire History for a User
-const clearUserHistory = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    await WebsiteHistory.deleteMany({ userId });
-
-    return res.status(200).json({ message: "History cleared successfully." });
-  } catch (error) {
-    console.error("Error clearing history:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-// ✅ Delete a Specific History Entry
-const deleteHistoryEntry = async (req, res) => {
-  try {
-    const { userId, historyId } = req.params;
-
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found." });
-
-    const deleted = await WebsiteHistory.findOneAndDelete({ _id: historyId, userId });
-
-    if (!deleted) {
-      return res.status(404).json({ error: "History entry not found." });
+    if (!clerkUserId || !url || !action) {
+      return res.status(400).json({ error: 'userId, url, and action are required.' });
     }
 
-    return res.status(200).json({ message: "History entry deleted successfully." });
+    const newHistory = new WebsiteHistory({
+      userId,
+      url,
+      seoReport,
+      seoRecommendations,
+      action,
+    });
+
+    await newHistory.save();
+    return res.status(201).json(newHistory);
   } catch (error) {
-    console.error("Error deleting history entry:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("❌ Error creating history record:", error.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// 📄 READ ALL histories for a user
+const getUserHistory = async (req, res) => {
+  try {
+    const clerkUserId = req.auth.userId;
+    if (!clerkUserId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const history = await WebsiteHistory.find({ clerkUserId }).sort({ createdAt: -1 });
+
+    if (!history.length) {
+      return res.status(404).json({ error: 'No history found for this user.' });
+    }
+
+    return res.status(200).json(history);
+  } catch (error) {
+    console.error("❌ Error fetching user history:", error.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// 📄 READ single history by ID
+const getHistoryById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const history = await WebsiteHistory.findById(id);
+    if (!history) {
+      return res.status(404).json({ error: 'History record not found.' });
+    }
+
+    return res.status(200).json(history);
+  } catch (error) {
+    console.error("❌ Error fetching history by ID:", error.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// ✏️ UPDATE a history record
+const updateHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updated = await WebsiteHistory.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ error: 'History record not found.' });
+    }
+
+    return res.status(200).json(updated);
+  } catch (error) {
+    console.error("❌ Error updating history:", error.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// 🗑️ DELETE a history record
+const deleteHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await WebsiteHistory.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'History record not found.' });
+    }
+
+    return res.status(200).json({ message: 'History record deleted successfully.' });
+  } catch (error) {
+    console.error("❌ Error deleting history:", error.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
 export {
+  createHistory,
   getUserHistory,
-  getWebsiteHistory,
-  clearUserHistory,
-  deleteHistoryEntry
+  getHistoryById,
+  updateHistory,
+  deleteHistory
 };
