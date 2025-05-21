@@ -2,6 +2,8 @@ import SeoReport from "../models/seoModel.js";
 import crypto from "crypto";
 import axios from "axios";
 import dotenv from "dotenv";
+import User from "../models/User.js";
+
 
 dotenv.config(); // Load environment variables
 
@@ -118,7 +120,8 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
 
 const generateAndScoreReport = async (req, res) => {
     const { phrase, domain } = req.body;
-    const { clerkUserId } = req.auth;
+    const clerkUserId = req.auth.userId;
+
 
     if (!phrase || !domain || !clerkUserId) {
         return res.status(400).json({ error: "Missing required fields (phrase, domain, clerkUserId)" });
@@ -253,6 +256,8 @@ const generateAndScoreReport = async (req, res) => {
             phraseResult: report.phraseResults.find(p => p.jid === jid)
         });
 
+        
+
     } catch (error) {
         console.error("Fatal Error in generateAndScoreReport:", error);
         return res.status(500).json({
@@ -276,25 +281,38 @@ const deleteReport = async (req, res) => {
     const report = await SeoReport.findOne({ "phraseResults.jid": jid });
 
     if (!report) {
-      return res.status(404).json({ error: "No report found containing this jid" });
+      return res
+        .status(404)
+        .json({ error: "No report found containing this jid" });
     }
 
     // Filter out the phraseResult with the matching jid
-    report.phraseResults = report.phraseResults.filter(p => p.jid !== jid);
+    report.phraseResults = report.phraseResults.filter((p) => p.jid !== jid);
 
     if (report.phraseResults.length === 0) {
       // If no phrases left, delete the entire report
       await SeoReport.findByIdAndDelete(report._id);
-      return res.status(200).json({ message: "Report deleted completely as it had only one phrase" });
+      return res
+        .status(200)
+        .json({
+          message: "Report deleted completely as it had only one phrase",
+        });
     }
 
     // Otherwise, save the updated report
     await report.save();
 
-    res.status(200).json({ message: "Phrase result deleted successfully", jid });
+    res
+      .status(200)
+      .json({ message: "Phrase result deleted successfully", jid });
   } catch (error) {
     console.error("Error deleting report/phrase:", error.message);
-    res.status(500).json({ error: "Failed to delete report or phrase", details: error.message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to delete report or phrase",
+        details: error.message,
+      });
   }
 };
 
@@ -312,14 +330,18 @@ const returnReport = async (req, res) => {
     const report = await SeoReport.findOne({ "phraseResults.jid": jid });
 
     if (!report) {
-      return res.status(404).json({ error: "No report found containing this jid ",  jid });
+      return res
+        .status(404)
+        .json({ error: "No report found containing this jid ", jid });
     }
 
     // Find the specific phraseResult inside the report
-    const phraseEntry = report.phraseResults.find(p => p.jid === jid);
+    const phraseEntry = report.phraseResults.find((p) => p.jid === jid);
 
     if (!phraseEntry) {
-      return res.status(404).json({ error: "Phrase entry not found for this jid" });
+      return res
+        .status(404)
+        .json({ error: "Phrase entry not found for this jid" });
     }
 
     // Respond with the phraseEntry and some report metadata
@@ -327,12 +349,13 @@ const returnReport = async (req, res) => {
       reportId: report._id,
       domain: report.domain,
       scanDate: report.scanDate,
-      phraseResult: phraseEntry
+      phraseResult: phraseEntry,
     });
-
   } catch (error) {
     console.error("Error fetching report:", error.message);
-    return res.status(500).json({ error: "Internal server error", details: error.message });
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
 

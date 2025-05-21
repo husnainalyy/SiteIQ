@@ -81,6 +81,20 @@ const UserSchema = new mongoose.Schema(
     weeklyWebsiteLimit: { type: Number, default: 3 },
     lastResetDate: { type: Date, default: Date.now },
 
+    // Subscription & Usage Tracking
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["freemium", "individual", "business"],
+        default: "freemium",
+      },
+      usage: {
+        seoRecommendations: { type: Number, default: 0 },
+        techStackRecommendations: { type: Number, default: 0 },
+        weekStart: { type: Date, default: Date.now }, // tracks weekly reset
+      },
+    },
+
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
