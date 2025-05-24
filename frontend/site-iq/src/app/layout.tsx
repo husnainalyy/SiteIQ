@@ -1,7 +1,6 @@
-// app/layout.jsx
+
 import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css"
-import '@/styles/global.css';
 import { Inter } from "next/font/google"
 import { ReactNode } from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -19,7 +18,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className={inter.className}>
           <QueryProvider>
             <TooltipProvider>

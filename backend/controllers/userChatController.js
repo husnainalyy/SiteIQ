@@ -44,3 +44,56 @@ export async function deleteUserChat(req, res) {
     res.status(500).json({ error: "Failed to delete chat" });
   }
 }
+
+// Fetch a single conversation with all messages
+export async function getChatHistory(req, res) {
+  const { id } = req.params; // Conversation ID
+  const clerkUserId = req.auth?.userId;
+
+  if (!clerkUserId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const chat = await Conversation.findOne({ _id: id, clerkUserId });
+    if (!chat) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    res.json({ chat });
+  } catch (err) {
+    console.error("Fetch chat history error:", err.message);
+    res.status(500).json({ error: "Failed to fetch chat history" });
+  }
+}
+
+// Add a new message to an existing conversation
+export async function addMessageToChat(req, res) {
+  const { id } = req.params; // Conversation ID
+  const clerkUserId = req.auth?.userId;
+  const { message } = req.body;
+
+  if (!clerkUserId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  if (!message) {
+    return res.status(400).json({ error: "Message is required" });
+  }
+
+  try {
+    const chat = await Conversation.findOneAndUpdate(
+      { _id: id, clerkUserId },
+      {
+        $push: { messages: message },
+        $set: { lastUpdated: new Date() }
+      },
+      { new: true }
+    );
+    if (!chat) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    res.json({ chat });
+  } catch (err) {
+    console.error("Add message error:", err.message);
+    res.status(500).json({ error: "Failed to add message" });
+  }
+}

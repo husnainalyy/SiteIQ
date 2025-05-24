@@ -198,7 +198,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        
+
         {/* Features Section (Existing component) */}
         <Features />
         
@@ -234,7 +234,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <CtaSection />
         
