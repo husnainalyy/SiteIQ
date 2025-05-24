@@ -11,72 +11,104 @@ export default api;
 
 export async function recommendTechStack({ useCase, seoFocused, performanceFocused }) {
   try {
-    const response = await api.post("/techstack/recommend", {
+    // Ensure boolean values are properly converted
+    const requestData = {
       useCase,
-      seoFocused,
-      performanceFocused,
-    });
+      seoFocused: Boolean(seoFocused),
+      performanceFocused: Boolean(performanceFocused)
+    };
+
+    console.log('Sending request data:', requestData); // Debug log
+
+    const response = await api.post("/techstack/recommend", requestData);
     return response.data;
   } catch (error) {
+    console.error('API Error:', error.response?.data || error); // Debug log
     throw new Error(error.response?.data?.message || "Failed to fetch recommendation");
   }
 }
 
-export async function improveTechStack({ websiteUrl, seoFocused, performanceFocused }) {
+export const improveTechStack = async ({ websiteUrl, useCase, seoFocused, performanceFocused }) => {
   try {
-    const response = await api.post("/techstack/improve", {
+    console.log("Sending improve request with data:", {
       websiteUrl,
+      useCase,
       seoFocused,
-      performanceFocused,
+      performanceFocused
     });
+
+    const requestData = {
+      websiteUrl,
+      useCase,
+      seoFocused: Boolean(seoFocused),
+      performanceFocused: Boolean(performanceFocused)
+    };
+
+    const response = await api.post("/techstack/improve", requestData);
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || "Failed to fetch improvement analysis");
+    console.error("Improve Tech Stack API Error:", error.response?.data || error.message);
+    throw error;
   }
-}
+};
 
-
-
-export async function sendChatMessage({ message, conversationId }) {
+export const sendChatMessage = async ({ message, conversationId }) => {
   try {
+    console.log("Sending chat message:", { message, conversationId });
     const response = await api.post("/chat/chat", {
       message,
       conversationId,
     });
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || "Failed to send chat message");
+    console.error("Send Chat Message API Error:", error.response?.data || error.message);
+    throw error;
   }
-}
-
-
-
-export async function getMessagesByConversationId(conversationId) {
-  try {
-    const response = await api.get(`/chat/${conversationId}`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || "Failed to fetch messages");
-  }
-}
-
-
+};
 
 export async function getUserChats() {
   try {
-    const response = await api.get("/chat");
+    const response = await api.get("/userchat/chats");
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Failed to fetch chats");
   }
 }
 
-
-export async function deleteChat(chatId) {
+export const getChatHistory = async () => {
   try {
-    const response = await api.delete(`/chat/${chatId}`);
+    console.log("Fetching chat history from API...");
+    const response = await api.get("/userchat/chats");
+    console.log("API Response:", response.data);
+    
+    if (!response.data) {
+      console.log("No data received from API");
+      return [];
+    }
+    
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || "Failed to delete chat");
+    console.log("Get Chat History API Error:", error.response || error);
+    throw error;
   }
-}
+};
+
+export const getChatMessages = async (chatId) => {
+  try {
+    const response = await api.get(`/userchat/chats/${chatId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Get Chat Messages API Error:", error);
+    throw error;
+  }
+};
+
+export const deleteChat = async (chatId) => {
+  try {
+    const response = await api.delete(`/userchat/chats/${chatId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Delete Chat API Error:", error);
+    throw error;
+  }
+};

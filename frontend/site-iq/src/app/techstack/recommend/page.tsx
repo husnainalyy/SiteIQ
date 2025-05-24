@@ -1,38 +1,33 @@
 'use client';
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Loader, Check, X } from "lucide-react";
+import { recommendTechStack } from "@/lib/api";
 
-interface RecommendationResult {
-  summary: string;
-  frontend: TechRecommendation[];
-  backend: TechRecommendation[];
-  database: TechRecommendation[];
-  hosting: TechRecommendation[];
-  additionalTools: TechRecommendation[];
+interface TechStack {
+  stack: string[];
+  reason: string;
 }
 
-interface TechRecommendation {
-  name: string;
-  description: string;
-  pros: string[];
-  cons: string[];
+interface RecommendationResult {
+  frontend: TechStack;
+  backend: TechStack;
+  database: TechStack;
+  hosting: TechStack;
+  other: TechStack;
 }
 
 export default function Recommend() {
   const [formData, setFormData] = useState({
     useCase: "",
-    businessType: "",
-    seoFocused: true,
-    performanceFocused: true,
-    scalability: false,
-    budget: "medium",
+    seoFocused: false,
+    performanceFocused: false,
   });
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
@@ -40,24 +35,17 @@ export default function Recommend() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: checked,
-    });
-  };
-
-  const handleBudgetChange = (budget: string) => {
-    setFormData({
-      ...formData,
-      budget,
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,145 +57,23 @@ export default function Recommend() {
       return;
     }
 
-    if (!formData.businessType) {
-      setError("Please specify your business type");
-      return;
-    }
-
     setLoading(true);
     
     try {
-      // In a real application, you would call your backend API here
-      // const response = await fetch('http://localhost:4500/api/techstack/recommend', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // const data = await response.json();
+      // Log the form data before sending
+      console.log("Form data before sending:", formData);
       
-      // Mock API response for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Example response
-      const mockRecommendation: RecommendationResult = {
-        summary: "Based on your e-commerce business needs with focus on SEO and performance, I recommend a modern stack that balances development speed, performance, and SEO capabilities while fitting within a medium budget constraint.",
-        frontend: [
-          {
-            name: "Next.js",
-            description: "A React framework with built-in SSR/SSG capabilities ideal for e-commerce",
-            pros: [
-              "Excellent SEO through server-side rendering",
-              "Fast page loads with automatic code splitting",
-              "Large ecosystem of components and libraries"
-            ],
-            cons: [
-              "Steeper learning curve than plain React",
-              "Requires more server resources than static sites"
-            ]
-          },
-          {
-            name: "Tailwind CSS",
-            description: "Utility-first CSS framework for rapid UI development",
-            pros: [
-              "Highly customizable",
-              "Minimal CSS output for performance",
-              "Rapid development through utility classes"
-            ],
-            cons: [
-              "HTML can become verbose",
-              "Initial learning curve"
-            ]
-          }
-        ],
-        backend: [
-          {
-            name: "Node.js with Express",
-            description: "JavaScript runtime with popular web framework",
-            pros: [
-              "JavaScript throughout the stack",
-              "Large ecosystem of packages",
-              "Good performance for most e-commerce workloads"
-            ],
-            cons: [
-              "Not as performant as some compiled languages",
-              "Callback-heavy code can become complex"
-            ]
-          }
-        ],
-        database: [
-          {
-            name: "PostgreSQL",
-            description: "Powerful open-source relational database",
-            pros: [
-              "Robust feature set",
-              "Excellent for complex data relationships",
-              "Strong reliability and data integrity"
-            ],
-            cons: [
-              "Requires more configuration than NoSQL options",
-              "May need optimization for very high traffic"
-            ]
-          },
-          {
-            name: "Redis",
-            description: "In-memory data store for caching",
-            pros: [
-              "Extremely fast response times",
-              "Reduces database load",
-              "Improves user experience through caching"
-            ],
-            cons: [
-              "Additional infrastructure to manage",
-              "Requires memory management strategies"
-            ]
-          }
-        ],
-        hosting: [
-          {
-            name: "Vercel",
-            description: "Platform optimized for Next.js deployments",
-            pros: [
-              "Seamless integration with Next.js",
-              "Global CDN for fast content delivery",
-              "Automatic HTTPS and edge caching"
-            ],
-            cons: [
-              "Can become costly at higher traffic volumes",
-              "Some vendor lock-in"
-            ]
-          }
-        ],
-        additionalTools: [
-          {
-            name: "Stripe",
-            description: "Payment processing platform",
-            pros: [
-              "Easy integration",
-              "Comprehensive payment options",
-              "Strong security features"
-            ],
-            cons: [
-              "Transaction fees higher than some alternatives",
-              "Complex refund processes"
-            ]
-          },
-          {
-            name: "Algolia",
-            description: "Search-as-a-service platform",
-            pros: [
-              "Lightning-fast search results",
-              "Typo tolerance and filtering",
-              "Analytics on user search behavior"
-            ],
-            cons: [
-              "Monthly cost increases with data size",
-              "Requires synchronization with your database"
-            ]
-          }
-        ]
+      const requestData = {
+        useCase: formData.useCase,
+        seoFocused: formData.seoFocused,
+        performanceFocused: formData.performanceFocused
       };
-
-      setRecommendation(mockRecommendation);
+      
+      console.log("Request data being sent:", requestData);
+      
+      const response = await recommendTechStack(requestData);
+      const data = response.recommendation;
+      setRecommendation(data);
     } catch (err) {
       console.error("Error getting recommendation:", err);
       setError("Failed to get recommendations. Please try again later.");
@@ -216,45 +82,41 @@ export default function Recommend() {
     }
   };
 
-  const renderTechItem = (tech: TechRecommendation, index: number, delay: number = 0) => (
-    <motion.div
-      key={tech.name}
-      className="bg-white dark:bg-slate-800 rounded-lg p-5 shadow-md border border-slate-200 dark:border-slate-700"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay + (index * 0.1) }}
-      whileHover={{ y: -5, boxShadow: "0 12px 20px -5px rgba(0, 0, 0, 0.1)" }}
-    >
-      <h4 className="text-lg font-semibold mb-2">{tech.name}</h4>
-      <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{tech.description}</p>
-      
-      <div className="space-y-3">
-        <div>
-          <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Pros</h5>
-          <ul className="space-y-1">
-            {tech.pros.map((pro, i) => (
-              <li key={i} className="flex items-start text-sm">
-                <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                <span>{pro}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+  const renderTechItem = (tech: TechStack, title: string, index: number, delay: number = 0) => {
+    if (!tech || !tech.reason) {
+      return null;
+    }
+
+    return (
+      <motion.div
+        key={title}
+        className="bg-white dark:bg-slate-800 rounded-lg p-5 shadow-md border border-slate-200 dark:border-slate-700"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay + (index * 0.1) }}
+        whileHover={{ y: -5, boxShadow: "0 12px 20px -5px rgba(0, 0, 0, 0.1)" }}
+      >
+        <h4 className="text-lg font-semibold mb-2">{title}</h4>
+        <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{tech.reason}</p>
         
-        <div>
-          <h5 className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Cons</h5>
-          <ul className="space-y-1">
-            {tech.cons.map((con, i) => (
-              <li key={i} className="flex items-start text-sm">
-                <X size={16} className="text-red-500 mr-2 mt-0.5 shrink-0" />
-                <span>{con}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </motion.div>
-  );
+        {tech.stack && tech.stack.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Technologies</h5>
+              <ul className="space-y-1">
+                {tech.stack.map((item, i) => (
+                  <li key={i} className="flex items-start text-sm">
+                    <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4">
@@ -299,56 +161,15 @@ export default function Recommend() {
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="businessType">Business Type</Label>
+                      <Label htmlFor="useCase">Business Type and Use Case in detail</Label>
                       <Input
-                        id="businessType"
-                        name="businessType"
-                        placeholder="e.g., E-commerce, Blog, SaaS, Portfolio"
-                        value={formData.businessType}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="useCase">Describe Your Website/Application Use Case</Label>
-                      <Textarea
                         id="useCase"
                         name="useCase"
-                        placeholder="e.g., I need an online store to sell handmade crafts with payment processing, inventory management, and a blog section."
-                        rows={4}
+                        placeholder="e.g., E-commerce, Blog, SaaS, Portfolio"
                         value={formData.useCase}
                         onChange={handleInputChange}
+                        required
                       />
-                    </div>
-
-                    <div>
-                      <Label className="block mb-2">Project Budget</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Button
-                          type="button"
-                          variant={formData.budget === "low" ? "default" : "outline"}
-                          className={formData.budget === "low" ? "bg-gradient-to-r from-blue-600 to-purple-600" : ""}
-                          onClick={() => handleBudgetChange("low")}
-                        >
-                          Low
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={formData.budget === "medium" ? "default" : "outline"}
-                          className={formData.budget === "medium" ? "bg-gradient-to-r from-blue-600 to-purple-600" : ""}
-                          onClick={() => handleBudgetChange("medium")}
-                        >
-                          Medium
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={formData.budget === "high" ? "default" : "outline"}
-                          className={formData.budget === "high" ? "bg-gradient-to-r from-blue-600 to-purple-600" : ""}
-                          onClick={() => handleBudgetChange("high")}
-                        >
-                          High
-                        </Button>
-                      </div>
                     </div>
 
                     <div className="space-y-4">
@@ -357,9 +178,10 @@ export default function Recommend() {
                         <div className="flex items-center space-x-2">
                           <Checkbox 
                             id="seoFocused" 
+                            name="seoFocused"
                             checked={formData.seoFocused}
                             onCheckedChange={(checked) => 
-                              handleCheckboxChange("seoFocused", checked as boolean)
+                              handleCheckboxChange("seoFocused", checked === true)
                             }
                           />
                           <Label htmlFor="seoFocused" className="text-sm">Search Engine Optimization</Label>
@@ -368,24 +190,15 @@ export default function Recommend() {
                         <div className="flex items-center space-x-2">
                           <Checkbox 
                             id="performanceFocused" 
+                            name="performanceFocused"
                             checked={formData.performanceFocused}
                             onCheckedChange={(checked) => 
-                              handleCheckboxChange("performanceFocused", checked as boolean)
+                              handleCheckboxChange("performanceFocused", checked === true)
                             }
                           />
                           <Label htmlFor="performanceFocused" className="text-sm">Performance & Speed</Label>
                         </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="scalability" 
-                            checked={formData.scalability}
-                            onCheckedChange={(checked) => 
-                              handleCheckboxChange("scalability", checked as boolean)
-                            }
-                          />
-                          <Label htmlFor="scalability" className="text-sm">Scalability for Growth</Label>
-                        </div>
                       </div>
                     </div>
 
@@ -450,99 +263,108 @@ export default function Recommend() {
                     className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-8"
                   >
                     <h3 className="font-medium text-lg mb-2 text-blue-700 dark:text-blue-400">Summary</h3>
-                    <p className="text-slate-700 dark:text-slate-300">{recommendation.summary}</p>
+                    <p className="text-slate-700 dark:text-slate-300">
+                      Based on your requirements for {formData.useCase}, we've analyzed and recommended the following technology stack.
+                      {formData.seoFocused && " SEO optimization has been prioritized."}
+                      {formData.performanceFocused && " Performance optimization has been prioritized."}
+                    </p>
                   </motion.div>
 
                   <div className="space-y-8">
-                    <motion.section
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold mr-3">
-                          F
+                    {/* Frontend Section */}
+                    {recommendation.frontend && (
+                      <motion.section
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold mr-3">
+                            F
+                          </div>
+                          <h2 className="text-xl font-semibold">Frontend Technologies</h2>
                         </div>
-                        <h2 className="text-xl font-semibold">Frontend Technologies</h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {recommendation.frontend.map((tech, index) => (
-                          renderTechItem(tech, index, 0.4)
-                        ))}
-                      </div>
-                    </motion.section>
+                        <div className="grid grid-cols-1 gap-6">
+                          {renderTechItem(recommendation.frontend, "Frontend Stack", 0, 0.4)}
+                        </div>
+                      </motion.section>
+                    )}
 
-                    <motion.section
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold mr-3">
-                          B
+                    {/* Backend Section */}
+                    {recommendation.backend && (
+                      <motion.section
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold mr-3">
+                            B
+                          </div>
+                          <h2 className="text-xl font-semibold">Backend Technologies</h2>
                         </div>
-                        <h2 className="text-xl font-semibold">Backend Technologies</h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {recommendation.backend.map((tech, index) => (
-                          renderTechItem(tech, index, 0.6)
-                        ))}
-                      </div>
-                    </motion.section>
+                        <div className="grid grid-cols-1 gap-6">
+                          {renderTechItem(recommendation.backend, "Backend Stack", 1, 0.6)}
+                        </div>
+                      </motion.section>
+                    )}
 
-                    <motion.section
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.7 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold mr-3">
-                          D
+                    {/* Database Section */}
+                    {recommendation.database && (
+                      <motion.section
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold mr-3">
+                            D
+                          </div>
+                          <h2 className="text-xl font-semibold">Database Solutions</h2>
                         </div>
-                        <h2 className="text-xl font-semibold">Database Solutions</h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {recommendation.database.map((tech, index) => (
-                          renderTechItem(tech, index, 0.8)
-                        ))}
-                      </div>
-                    </motion.section>
+                        <div className="grid grid-cols-1 gap-6">
+                          {renderTechItem(recommendation.database, "Database Stack", 2, 0.8)}
+                        </div>
+                      </motion.section>
+                    )}
 
-                    <motion.section
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.9 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold mr-3">
-                          H
+                    {/* Hosting Section */}
+                    {recommendation.hosting && (
+                      <motion.section
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold mr-3">
+                            H
+                          </div>
+                          <h2 className="text-xl font-semibold">Hosting & Infrastructure</h2>
                         </div>
-                        <h2 className="text-xl font-semibold">Hosting & Infrastructure</h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {recommendation.hosting.map((tech, index) => (
-                          renderTechItem(tech, index, 1.0)
-                        ))}
-                      </div>
-                    </motion.section>
+                        <div className="grid grid-cols-1 gap-6">
+                          {renderTechItem(recommendation.hosting, "Hosting Stack", 3, 1.0)}
+                        </div>
+                      </motion.section>
+                    )}
 
-                    <motion.section
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1.1 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-700 to-indigo-700 flex items-center justify-center text-white font-bold mr-3">
-                          T
+                    {/* Additional Tools Section */}
+                    {recommendation.other && (
+                      <motion.section
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.1 }}
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-700 to-indigo-700 flex items-center justify-center text-white font-bold mr-3">
+                            T
+                          </div>
+                          <h2 className="text-xl font-semibold">Additional Tools</h2>
                         </div>
-                        <h2 className="text-xl font-semibold">Additional Tools</h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {recommendation.additionalTools.map((tech, index) => (
-                          renderTechItem(tech, index, 1.2)
-                        ))}
-                      </div>
-                    </motion.section>
+                        <div className="grid grid-cols-1 gap-6">
+                          {renderTechItem(recommendation.other, "Additional Tools", 4, 1.2)}
+                        </div>
+                      </motion.section>
+                    )}
                   </div>
                 </CardContent>
               </Card>

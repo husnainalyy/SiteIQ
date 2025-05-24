@@ -1,339 +1,479 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Check, X, Loader, Trash2, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader, Check, X, ChevronLeft, ChevronRight, Trash2, MessageSquare } from "lucide-react";
+import { improveTechStack, sendChatMessage, getChatHistory, deleteChat, getChatMessages } from "@/lib/api";
 
-interface ImprovementResult {
-  summary: string;
-  currentTech: TechItem[];
-  recommendations: Recommendation[];
-  seoImpact: string;
-  performanceImpact: string;
+interface TechStack {
+  stack: string[];
+  reason: string;
 }
 
-interface TechItem {
-  name: string;
-  category: string;
-  description: string;
-}
-
-interface Recommendation {
+interface WebsiteMeta {
   title: string;
   description: string;
-  priority: "low" | "medium" | "high";
-  difficulty: "easy" | "moderate" | "hard";
-  pros: string[];
-  cons: string[];
+  keywords: string[];
+  scripts: string[];
+  metaTags: { [key: string]: string };
 }
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
+interface RecommendationResult {
+  frontend: TechStack;
+  backend: TechStack;
+  database: TechStack;
+  hosting: TechStack;
+  other: TechStack;
+  meta: WebsiteMeta;
+}
+
+interface ChatHistory {
+  id: string;
+  title: string;
+  lastMessage: string;
+  timestamp: string;
 }
 
 export default function Improve() {
   const [formData, setFormData] = useState({
     websiteUrl: "",
     useCase: "",
-    seoFocused: true,
-    performanceFocused: true,
+    seoFocused: false,
+    performanceFocused: false,
   });
   const [loading, setLoading] = useState(false);
-  const [improvement, setImprovement] = useState<ImprovementResult | null>(null);
+  const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
   const [error, setError] = useState("");
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [chatHistory, setChatHistory] = useState<{id: string, title: string}[]>([
-    { id: "1", title: "Previous analysis for example.com" },
-    { id: "2", title: "Improvements for mysite.com" },
-  ]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [showMetaInfo, setShowMetaInfo] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: checked,
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.websiteUrl) {
-      setError("Please enter your website URL");
-      return;
-    }
-
-    // Simple URL validation
-    if (!formData.websiteUrl.match(/^(http|https):\/\/[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/.*)?$/)) {
-      setError("Please enter a valid URL (e.g., https://example.com)");
-      return;
-    }
-
-    if (!formData.useCase) {
-      setError("Please describe your business use case");
+    if (!formData.websiteUrl || !formData.useCase) {
+      setError("Please provide both website URL and use case");
       return;
     }
 
     setLoading(true);
-    setShowChat(false);
     
     try {
-      // In a real application, you would call your backend API here
-      // const response = await fetch('http://localhost:4500/api/techstack/improve', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // const data = await response.json();
+      console.log("Form data before sending:", formData);
       
-      // Mock API response for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Example response
-      const mockResponse: ImprovementResult = {
-        summary: "Your website is built using WordPress with a custom theme. While this provides good content management capabilities, there are several opportunities to improve performance and SEO.",
-        currentTech: [
-          {
-            name: "WordPress",
-            category: "CMS",
-            description: "Open-source content management system used for your website"
-          },
-          {
-            name: "MySQL",
-            category: "Database",
-            description: "Relational database management system storing your website data"
-          },
-          {
-            name: "jQuery",
-            category: "JavaScript Library",
-            description: "JavaScript library used for DOM manipulation and animations"
-          },
-          {
-            name: "Apache",
-            category: "Web Server",
-            description: "HTTP server handling requests to your website"
-          }
-        ],
-        recommendations: [
-          {
-            title: "Replace jQuery with modern vanilla JavaScript",
-            description: "jQuery is adding unnecessary weight to your pages and slowing down load times. Modern browsers now support most features natively that previously required jQuery.",
-            priority: "high",
-            difficulty: "moderate",
-            pros: [
-              "Reduced JavaScript payload size",
-              "Faster page load times",
-              "Better performance on mobile devices"
-            ],
-            cons: [
-              "Requires refactoring existing code",
-              "May need to reimplement some custom functionality"
-            ]
-          },
-          {
-            title: "Implement server-side caching",
-            description: "Your WordPress site is dynamically generating pages on every request. Adding a caching layer would significantly improve load times.",
-            priority: "high",
-            difficulty: "easy",
-            pros: [
-              "Dramatic performance improvements",
-              "Reduced server load",
-              "Better user experience"
-            ],
-            cons: [
-              "Requires careful configuration to handle dynamic content",
-              "May need to clear cache when content changes"
-            ]
-          },
-          {
-            title: "Optimize image delivery with a CDN",
-            description: "Your site has many high-resolution images loaded directly from your origin server. Implementing a CDN would distribute these assets globally and optimize delivery.",
-            priority: "medium",
-            difficulty: "easy",
-            pros: [
-              "Faster image loading worldwide",
-              "Reduced bandwidth costs",
-              "Automatic image format optimization"
-            ],
-            cons: [
-              "Additional service cost",
-              "Setup and configuration time"
-            ]
-          },
-          {
-            title: "Update to PHP 8.x",
-            description: "You're currently running PHP 7.2 which is no longer receiving security updates. Updating to PHP 8.x would improve security and performance.",
-            priority: "medium",
-            difficulty: "moderate",
-            pros: [
-              "Improved security",
-              "Better performance",
-              "Access to modern language features"
-            ],
-            cons: [
-              "May require updates to plugins or theme",
-              "Potential compatibility issues"
-            ]
-          }
-        ],
-        seoImpact: "Implementing these recommendations could improve page load speed by approximately 45%, which would positively impact SEO rankings. The performance improvements would also reduce bounce rates and improve user engagement metrics that search engines consider in rankings.",
-        performanceImpact: "Expected performance improvements include a 40-50% reduction in page load time, 60% reduction in time to first contentful paint, and overall smoother user experience, especially on mobile devices."
-      };
-
-      setImprovement(mockResponse);
+      const response = await improveTechStack({
+        websiteUrl: formData.websiteUrl,
+        useCase: formData.useCase,
+        seoFocused: formData.seoFocused,
+        performanceFocused: formData.performanceFocused
+      });
       
-      // Initialize chat with a system message
-      setChatMessages([
-        {
-          role: "assistant",
-          content: `I've analyzed your website at ${formData.websiteUrl} and provided recommendations for improvements. You can ask me any questions about the analysis or for more details about the suggested changes.`
-        }
-      ]);
+      console.log("API Response:", response);
       
-      // Add to chat history (in real app, this would come from the backend)
-      setChatHistory(prev => [
-        { id: String(Date.now()), title: `Improvements for ${new URL(formData.websiteUrl).hostname}` },
-        ...prev
-      ]);
-
+      setRecommendation(response.recommendation);
+      setConversationId(response.conversationId);
+      setShowChat(false);
+      setChatMessages([]);
     } catch (err) {
-      console.error("Error getting improvement recommendations:", err);
-      setError("Failed to analyze website. Please try again later.");
+      console.error("Error getting recommendation:", err);
+      setError("Failed to get recommendations. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || sendingMessage) return;
-    
-    const userMessage = newMessage.trim();
-    setNewMessage("");
-    setSendingMessage(true);
-    
-    // Add user message to chat
-    setChatMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    
+  // Load chat history immediately when component mounts
+  useEffect(() => {
+    const initializeChatHistory = async () => {
+      try {
+        console.log("Initializing chat history...");
+        const history = await getChatHistory();
+        console.log("Chat history loaded:", history);
+        if (Array.isArray(history)) {
+          setChatHistory(history);
+        } else {
+          console.log("No chat history found or invalid format");
+          setChatHistory([]);
+        }
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+        setChatHistory([]);
+      }
+    };
+
+    initializeChatHistory();
+  }, []); // Empty dependency array means this runs once on mount
+
+  const loadChatHistory = async () => {
     try {
-      // In a real app, call your backend API here
-      // const response = await fetch('http://localhost:4500/api/chat', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ 
-      //     message: userMessage,
-      //     conversationId: '123' // You would get this from the improvement response
-      //   }),
-      // });
-      // const data = await response.json();
-      
-      // Mock API response
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate AI response
-      const aiResponse = `Thank you for your question. Based on my analysis of your website, I would recommend ${userMessage.includes('jQuery') ? 'replacing jQuery with vanilla JavaScript or a smaller modern library like Alpine.js' : 'implementing the recommendations in order of priority, starting with the high-priority items that have relatively low difficulty'}. This approach will give you the best return on your time investment.`;
-      
-      setChatMessages(prev => [...prev, { role: "assistant", content: aiResponse }]);
-      
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setChatMessages(prev => [...prev, { 
+      const history = await getChatHistory();
+      if (Array.isArray(history)) {
+        setChatHistory(history);
+      } else {
+        setChatHistory([]);
+      }
+    } catch (err) {
+      console.error("Error loading chat history:", err);
+      setError("Failed to load chat history");
+      setChatHistory([]);
+    }
+  };
+
+  const handleChatSelect = async (chatId: string) => {
+    try {
+      setShowChat(true);
+      const messages = await getChatMessages(chatId);
+      setChatMessages(messages);
+      setSelectedChatId(chatId);
+      setConversationId(chatId);
+    } catch (err) {
+      console.error("Error loading chat messages:", err);
+      setError("Failed to load chat messages");
+    }
+  };
+
+  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteChat(chatId);
+      setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+      if (selectedChatId === chatId) {
+        setChatMessages([]);
+        setSelectedChatId(null);
+        setConversationId(null);
+      }
+    } catch (err) {
+      console.error("Error deleting chat:", err);
+      setError("Failed to delete chat");
+    }
+  };
+
+  const handleStartChat = () => {
+    if (!conversationId || !recommendation) return;
+
+    setShowChat(true);
+    setSelectedChatId(null);
+    // Initialize chat with a welcome message
+    const initialMessages = [
+      { 
         role: "assistant", 
-        content: "Sorry, there was an error processing your message. Please try again."
-      }]);
+        content: "I've analyzed your website and here are my recommendations. Feel free to ask me any questions about them!" 
+      }
+    ];
+    
+    setChatMessages(initialMessages);
+  };
+
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !conversationId) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatLoading(true);
+
+    // Add user message immediately
+    setChatMessages(prev => [...prev, { role: "user", content: userMessage }]);
+
+    try {
+      const response = await sendChatMessage({
+        message: userMessage,
+        conversationId
+      });
+
+      // Add AI response
+      setChatMessages(prev => [...prev, { role: "assistant", content: response.reply }]);
+      
+      // Refresh chat history to update last message
+      loadChatHistory();
+    } catch (err) {
+      console.error("Chat error:", err);
+      setError("Failed to send message. Please try again.");
     } finally {
-      setSendingMessage(false);
+      setChatLoading(false);
     }
   };
 
-  const handleDeleteHistory = (id: string) => {
-    setChatHistory(prev => prev.filter(item => item.id !== id));
+  const renderTechItem = (tech: TechStack, title: string, index: number, delay: number = 0) => {
+    if (!tech || !tech.reason) {
+      return null;
+    }
+
+    return (
+      <motion.div
+        key={title}
+        className="bg-white dark:bg-slate-800 rounded-lg p-5 shadow-md border border-slate-200 dark:border-slate-700"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay + (index * 0.1) }}
+        whileHover={{ y: -5, boxShadow: "0 12px 20px -5px rgba(0, 0, 0, 0.1)" }}
+      >
+        <h4 className="text-lg font-semibold mb-2">{title}</h4>
+        <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{tech.reason}</p>
+        
+        {tech.stack && tech.stack.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Technologies</h5>
+              <ul className="space-y-1">
+                {tech.stack.map((item, i) => (
+                  <li key={i} className="flex items-start text-sm">
+                    <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    );
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "text-red-500";
-      case "medium": return "text-yellow-500";
-      case "low": return "text-green-500";
-      default: return "text-gray-500";
-    }
-  };
+  const renderChatHistory = () => (
+    <AnimatePresence mode="wait">
+      {showSidebar && (
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 280, opacity: 1 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed top-24 bottom-24 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-hidden"
+        >
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <h3 className="font-medium text-lg">Chat History</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {!Array.isArray(chatHistory) || chatHistory.length === 0 ? (
+                <div className="text-center text-slate-500 dark:text-slate-400 py-8">
+                  No previous chats
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {chatHistory.map(chat => (
+                    <div 
+                      key={chat.id} 
+                      className="group flex items-center justify-between p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                      onClick={() => handleChatSelect(chat.id)}
+                    >
+                      <div className="flex items-center min-w-0">
+                        <MessageSquare className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                        <div className="truncate">
+                          <span className="text-sm font-medium block truncate">{chat.title}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
+                            {new Date(chat.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteChat(chat.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 flex-shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "hard": return "text-red-500";
-      case "moderate": return "text-yellow-500";
-      case "easy": return "text-green-500";
-      default: return "text-gray-500";
-    }
+  const renderChatInterface = () => (
+    <Card>
+      <CardHeader className="border-b">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setShowChat(false)}
+              className="mr-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle>AI Assistant - Ask About Your Analysis</CardTitle>
+          </div>
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => setRecommendation(null)}
+          >
+            New Analysis
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="flex flex-col h-[600px]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {chatMessages.map((msg, i) => (
+              <motion.div
+                key={i}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div 
+                  className={`max-w-[80%] rounded-lg p-4 ${
+                    msg.role === 'user' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </motion.div>
+            ))}
+            {chatLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-lg p-4">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+            <form onSubmit={handleChatSubmit} className="flex space-x-2">
+              <Input
+                placeholder="Ask a question about your tech stack analysis..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                type="submit"
+                disabled={chatLoading || !chatInput.trim()} 
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {chatLoading ? (
+                  <Loader className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Send'
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderMetaInfo = (meta: WebsiteMeta) => {
+    if (!meta) return null;
+    
+    return (
+      <Card className="bg-white dark:bg-gray-800 shadow-lg mb-6">
+        <CardHeader>
+          <CardTitle className="text-xl text-gray-800 dark:text-white">
+            Website Meta Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {meta.title && (
+              <div>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Title</h3>
+                <p className="text-gray-600 dark:text-gray-400 break-words">{meta.title}</p>
+              </div>
+            )}
+            {meta.description && (
+              <div>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Description</h3>
+                <p className="text-gray-600 dark:text-gray-400 break-words">{meta.description}</p>
+              </div>
+            )}
+            {meta.keywords && meta.keywords.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Keywords</h3>
+                <div className="flex flex-wrap gap-2">
+                  {meta.keywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {meta.scripts && meta.scripts.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Scripts</h3>
+                <div className="space-y-2">
+                  {meta.scripts.map((script, index) => (
+                    <div
+                      key={index}
+                      className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm font-mono overflow-x-auto"
+                    >
+                      {script}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {meta.metaTags && Object.keys(meta.metaTags).length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Meta Tags</h3>
+                <div className="space-y-2">
+                  {Object.entries(meta.metaTags).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm"
+                    >
+                      <span className="font-semibold">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
-    <div className="container mx-auto px-4 relative">
+    <div className="container mx-auto px-4 relative min-h-screen">
       <div className="flex">
-        {/* Chat history sidebar */}
-        <AnimatePresence mode="wait">
-          {showSidebar && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed top-24 bottom-0 left-0 z-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-hidden"
-            >
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-                  <h3 className="font-medium text-lg">Chat History</h3>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2">
-                  {chatHistory.length === 0 ? (
-                    <div className="text-center text-slate-500 dark:text-slate-400 py-8">
-                      No previous chats
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {chatHistory.map(chat => (
-                        <div 
-                          key={chat.id} 
-                          className="group flex items-center justify-between p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                        >
-                          <div className="flex items-center">
-                            <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
-                            <span className="text-sm truncate">{chat.title}</span>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteHistory(chat.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        {renderChatHistory()}
+        
         {/* Main content */}
         <div className={`flex-1 transition-all duration-300 ${showSidebar ? 'ml-[280px]' : 'ml-0'}`}>
           {/* Toggle sidebar button */}
@@ -345,7 +485,7 @@ export default function Improve() {
           </button>
           
           <motion.div 
-            className="max-w-5xl mx-auto"
+            className="max-w-5xl mx-auto pb-24"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -370,7 +510,7 @@ export default function Improve() {
             </div>
 
             <AnimatePresence mode="wait">
-              {!improvement ? (
+              {!recommendation ? (
                 <motion.div
                   key="form"
                   initial={{ opacity: 0 }}
@@ -397,11 +537,10 @@ export default function Improve() {
 
                         <div className="space-y-2">
                           <Label htmlFor="useCase">Describe Your Website/Business</Label>
-                          <Textarea
+                          <Input
                             id="useCase"
                             name="useCase"
                             placeholder="e.g., E-commerce site selling handmade crafts, focusing on international customers"
-                            rows={4}
                             value={formData.useCase}
                             onChange={handleInputChange}
                           />
@@ -471,7 +610,7 @@ export default function Improve() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                  {!showChat ? (
+                  {showChat ? renderChatInterface() : (
                     <Card>
                       <CardHeader className="pb-0">
                         <motion.div
@@ -482,128 +621,21 @@ export default function Improve() {
                           <CardTitle className="text-2xl">Tech Stack Analysis</CardTitle>
                           <Button 
                             variant="outline"
-                            onClick={() => setImprovement(null)}
+                            onClick={() => setRecommendation(null)}
                           >
                             New Analysis
                           </Button>
                         </motion.div>
                       </CardHeader>
                       <CardContent className="pt-6">
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.2 }}
-                          className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-8"
-                        >
-                          <h3 className="font-medium text-lg mb-2 text-blue-700 dark:text-blue-400">Summary</h3>
-                          <p className="text-slate-700 dark:text-slate-300">{improvement.summary}</p>
-                          
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SEO Impact</h4>
-                              <p className="text-slate-600 dark:text-slate-400 text-sm">{improvement.seoImpact}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Performance Impact</h4>
-                              <p className="text-slate-600 dark:text-slate-400 text-sm">{improvement.performanceImpact}</p>
-                            </div>
-                          </div>
-                        </motion.div>
+                        {showMetaInfo && renderMetaInfo(recommendation.meta)}
 
-                        <div className="space-y-8">
-                          <motion.section
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                          >
-                            <div className="flex items-center mb-4">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold mr-3">
-                                C
-                              </div>
-                              <h2 className="text-xl font-semibold">Current Technology</h2>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                              {improvement.currentTech.map((tech, index) => (
-                                <motion.div
-                                  key={tech.name}
-                                  className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-md border border-slate-200 dark:border-slate-700"
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.3 + (index * 0.1) }}
-                                >
-                                  <h3 className="text-lg font-medium mb-1">{tech.name}</h3>
-                                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-2">{tech.category}</p>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400">{tech.description}</p>
-                                </motion.div>
-                              ))}
-                            </div>
-                          </motion.section>
-
-                          <motion.section
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                          >
-                            <div className="flex items-center mb-4">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold mr-3">
-                                R
-                              </div>
-                              <h2 className="text-xl font-semibold">Recommendations</h2>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              {improvement.recommendations.map((rec, index) => (
-                                <motion.div
-                                  key={index}
-                                  className="bg-white dark:bg-slate-800 rounded-lg p-5 shadow-md border border-slate-200 dark:border-slate-700"
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.5 + (index * 0.1) }}
-                                >
-                                  <div className="flex flex-wrap items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold">{rec.title}</h3>
-                                    <div className="flex space-x-2 mt-2 sm:mt-0">
-                                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPriorityColor(rec.priority)} bg-opacity-10 border border-opacity-30`}>
-                                        Priority: {rec.priority}
-                                      </span>
-                                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDifficultyColor(rec.difficulty)} bg-opacity-10 border border-opacity-30`}>
-                                        Difficulty: {rec.difficulty}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  
-                                  <p className="text-slate-600 dark:text-slate-400 mb-4">{rec.description}</p>
-                                  
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                      <h4 className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">Pros</h4>
-                                      <ul className="space-y-1">
-                                        {rec.pros.map((pro, i) => (
-                                          <li key={i} className="flex items-start text-sm">
-                                            <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                                            <span className="text-slate-600 dark:text-slate-400">{pro}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                    
-                                    <div>
-                                      <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Cons</h4>
-                                      <ul className="space-y-1">
-                                        {rec.cons.map((con, i) => (
-                                          <li key={i} className="flex items-start text-sm">
-                                            <X size={16} className="text-red-500 mr-2 mt-0.5 shrink-0" />
-                                            <span className="text-slate-600 dark:text-slate-400">{con}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              ))}
-                            </div>
-                          </motion.section>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {renderTechItem(recommendation.frontend, "Frontend", 0)}
+                          {renderTechItem(recommendation.backend, "Backend", 1)}
+                          {renderTechItem(recommendation.database, "Database", 2)}
+                          {renderTechItem(recommendation.hosting, "Hosting", 3)}
+                          {renderTechItem(recommendation.other, "Other", 4)}
                         </div>
 
                         <motion.div
@@ -615,101 +647,12 @@ export default function Improve() {
                           <Button 
                             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                             size="lg"
-                            onClick={() => setShowChat(true)}
+                            onClick={handleStartChat}
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
                             Ask Questions About This Analysis
                           </Button>
                         </motion.div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card>
-                      <CardHeader className="border-b">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => setShowChat(false)}
-                              className="mr-2"
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <CardTitle>AI Assistant - Ask About Your Analysis</CardTitle>
-                          </div>
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setImprovement(null)}
-                          >
-                            New Analysis
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <div className="flex flex-col h-[600px]">
-                          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {chatMessages.map((msg, i) => (
-                              <motion.div
-                                key={i}
-                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <div 
-                                  className={`max-w-[80%] rounded-lg p-4 ${
-                                    msg.role === 'user' 
-                                      ? 'bg-primary text-white' 
-                                      : 'bg-gray-100 dark:bg-slate-800'
-                                  }`}
-                                >
-                                  {msg.content}
-                                </div>
-                              </motion.div>
-                            ))}
-                            {sendingMessage && (
-                              <div className="flex justify-start">
-                                <div className="bg-gray-100 dark:bg-slate-800 rounded-lg p-4">
-                                  <div className="flex space-x-2">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                            <form 
-                              className="flex space-x-2" 
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                handleSendMessage();
-                              }}
-                            >
-                              <Input
-                                placeholder="Ask a question about your tech stack analysis..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button 
-                                type="submit"
-                                disabled={sendingMessage || !newMessage.trim()} 
-                                className="bg-primary"
-                              >
-                                {sendingMessage ? (
-                                  <Loader className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  'Send'
-                                )}
-                              </Button>
-                            </form>
-                          </div>
-                        </div>
                       </CardContent>
                     </Card>
                   )}

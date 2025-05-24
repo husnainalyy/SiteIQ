@@ -2,8 +2,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/Button";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 export default function TechStackLanding() {
@@ -97,11 +97,14 @@ export default function TechStackLanding() {
                   </motion.li>
                 </ul>
               </div>
-              <Link to="/techstack/improve">
+              <Link href="/techstack/improve" className="block">
                 <Button 
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                  asChild
                 >
-                  Improve Existing Stack <ArrowRight className="ml-2 h-4 w-4" />
+                  <span className="flex items-center justify-center">
+                    Improve Existing Stack <ArrowRight className="ml-2 h-4 w-4" />
+                  </span>
                 </Button>
               </Link>
             </CardContent>
@@ -170,11 +173,14 @@ export default function TechStackLanding() {
                   </motion.li>
                 </ul>
               </div>
-              <Link to="/techstack/recommend">
+              <Link href="/techstack/recommend" className="block">
                 <Button 
                   className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white"
+                  asChild
                 >
-                  Get Recommendations <ArrowRight className="ml-2 h-4 w-4" />
+                  <span className="flex items-center justify-center">
+                    Get Recommendations <ArrowRight className="ml-2 h-4 w-4" />
+                  </span>
                 </Button>
               </Link>
             </CardContent>

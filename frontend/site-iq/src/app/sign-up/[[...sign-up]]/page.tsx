@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/Button";
@@ -100,11 +100,11 @@ const Signup = () => {
                       <Checkbox id="terms" required />
                       <Label htmlFor="terms" className="text-sm">
                         I agree to the{" "}
-                        <Link to="/terms" className="text-accent hover:underline">
+                        <Link href="/terms" className="text-accent hover:underline">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link to="/privacy" className="text-accent hover:underline">
+                        <Link href="/privacy" className="text-accent hover:underline">
                           Privacy Policy
                         </Link>
                       </Label>
@@ -161,7 +161,7 @@ const Signup = () => {
                     <div className="text-center mt-6">
                       <p className="text-sm text-gray-600">
                         Already have an account?{" "}
-                        <Link to="/login" className="text-accent font-medium hover:underline">
+                        <Link href="/login" className="text-accent font-medium hover:underline">
                           Log in
                         </Link>
                       </p>

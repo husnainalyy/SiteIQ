@@ -98,7 +98,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -207,7 +208,7 @@
   }
 }
 
-/* ========== ADDITIONAL STYLES FROM app.css ========== */
+/* ========== APP-SPECIFIC STYLES ========== */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -221,9 +222,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }

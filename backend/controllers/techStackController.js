@@ -1,4 +1,4 @@
-import { analyzeWebsite } from "../services/tech_stack_aiservice.js";
+import { analyzeWebsite, recommendingTechStack } from "../services/tech_stack_aiservice.js";
 import Conversation from "../models/techstackChatModel.js";
 import { fetchWebsiteHTML, extractWebsiteInfo } from "../services/tech_stack_scrapper.js";
 import { extractHostname } from "../services/techstackUrlHelper.js"; // helper we'll define
@@ -12,7 +12,7 @@ export async function recommendStack(req, res) {
   }
 
   try {
-    const recommendation = await analyzeWebsite( useCase, seoFocused, performanceFocused);
+    const recommendation = await recommendingTechStack( useCase, seoFocused, performanceFocused);
 
     res.json({
       mode: "recommend",
