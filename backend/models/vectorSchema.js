@@ -1,33 +1,36 @@
-import mongoose from "mongoose"; // ✅ FIXED (import mongoose)
+import mongoose from "mongoose";
 
-
-const VectorSchema = new mongoose.Schema({
-    websiteUrl: {
-        type: String,
-        required: true,
-        unique: true,
-        match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/
+const WebsiteVectorSchema = new mongoose.Schema(
+    {
+        website: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Website",
+            required: true,
+            unique: true, // One vector per website
+        },
+        embeddings: {
+            type: [Number],
+            required: true,
+        },
+        textData: {
+            type: String,
+            required: true,
+        },
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
     },
-    embeddings: {
-        type: [Number], // Array of floating-point numbers
-        required: true
-    },
-    textData: {
-        type: String, // Store raw text for debugging and verification
-        required: true
-    },
-    metadata: {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        createdAt: { type: Date, default: Date.now },
-        lastUpdated: { type: Date, default: Date.now }
+    {
+        timestamps: true, // Handles createdAt and updatedAt automatically
     }
-});
+);
 
-// Index for faster vector search
-VectorSchema.index({ websiteUrl: 1 });
-VectorSchema.index({ userId: 1 });
-VectorSchema.index({ "metadata.lastUpdated": -1 });
+// Indexes for optimized search and filtering
+WebsiteVectorSchema.index({ website: 1 });
+WebsiteVectorSchema.index({ user: 1 });
+WebsiteVectorSchema.index({ updatedAt: -1 });
 
-
-const WebsiteVector = mongoose.model("WebsiteVector", VectorSchema);
+const WebsiteVector = mongoose.model("WebsiteVector", WebsiteVectorSchema);
 export default WebsiteVector;

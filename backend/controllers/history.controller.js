@@ -1,5 +1,5 @@
 // controllers/websiteHistoryController.js
-import WebsiteHistory from '../models/WebsiteHistory.js';
+import WebsiteHistory from '../models/Website.js';
 
 // ✅ CREATE a new website history record
 const createHistory = async (req, res) => {
