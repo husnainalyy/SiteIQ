@@ -59,6 +59,10 @@ export async function improveStack(req, res) {
 
     res.json({
       mode: "improve",
+      website: extractHostname(websiteUrl),
+      websiteTitle: metaTags.title || "Untitled",
+      websiteDescription: metaTags.description || "No description available",
+      scripts,
       websiteUrl,
       recommendation,
       conversationId: conversation._id

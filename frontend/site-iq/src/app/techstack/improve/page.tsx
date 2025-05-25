@@ -32,10 +32,18 @@ interface RecommendationResult {
 }
 
 interface ChatHistory {
-  id: string;
+  _id?: string;
   title: string;
   lastMessage: string;
-  timestamp: string;
+  timestamp?: string;
+  lastUpdated?: string;
+  createdAt?: string;
+  history?: Array<{
+    role?: string;
+    content?: string;
+    message?: string;
+    isUser?: boolean;
+  }>;
 }
 
 export default function Improve() {
@@ -94,12 +102,36 @@ export default function Improve() {
         performanceFocused: formData.performanceFocused
       });
       
-      console.log("API Response:", response);
+      console.log("Raw API Response:", response);
       
-      setRecommendation(response.recommendation);
-      setConversationId(response.conversationId);
-      setShowChat(false);
-      setChatMessages([]);
+      if (response && response.recommendation) {
+        console.log("Raw recommendation:", response.recommendation);
+        
+        // Ensure all tech stack sections are present
+        const recommendation = {
+          ...response.recommendation,
+          meta: {
+            title: response.websiteTitle || response.recommendation.meta?.title || response.recommendation.meta?.metaTags?.['og:title'] || '',
+            description: response.websiteDescription || response.recommendation.meta?.description || response.recommendation.meta?.metaTags?.['og:description'] || '',
+           // keywords: response.recommendation.meta?.keywords || [],
+            scripts: response.scripts || response.recommendation.meta?.scripts || [],
+           // metaTags: response.recommendation.meta?.metaTags || {}
+          }
+        };
+        
+        console.log("Processed recommendation:", recommendation);
+        
+        setRecommendation(recommendation);
+        setConversationId(response.conversationId);
+        setShowChat(false);
+        setChatMessages([]);
+        setShowMetaInfo(true);
+        
+        // Refresh chat history after creating new chat
+        await loadChatHistory();
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (err) {
       console.error("Error getting recommendation:", err);
       setError("Failed to get recommendations. Please try again later.");
@@ -108,34 +140,21 @@ export default function Improve() {
     }
   };
 
-  // Load chat history immediately when component mounts
-  useEffect(() => {
-    const initializeChatHistory = async () => {
-      try {
-        console.log("Initializing chat history...");
-        const history = await getChatHistory();
-        console.log("Chat history loaded:", history);
-        if (Array.isArray(history)) {
-          setChatHistory(history);
-        } else {
-          console.log("No chat history found or invalid format");
-          setChatHistory([]);
-        }
-      } catch (error) {
-        console.error("Failed to load chat history:", error);
-        setChatHistory([]);
-      }
-    };
-
-    initializeChatHistory();
-  }, []); // Empty dependency array means this runs once on mount
-
   const loadChatHistory = async () => {
     try {
-      const history = await getChatHistory();
-      if (Array.isArray(history)) {
-        setChatHistory(history);
+      console.log("Loading chat history...");
+      const response = await getChatHistory();
+      if (response && response.chats && Array.isArray(response.chats)) {
+        // Format the timestamps and normalize IDs
+        const formattedChats = response.chats.map(chat => ({
+          ...chat,
+          id: chat.id || chat._id,
+          timestamp: chat.timestamp || chat.lastUpdated || chat.createdAt || new Date().toISOString()
+        }));
+        console.log("Formatted chats:", formattedChats);
+        setChatHistory(formattedChats);
       } else {
+        console.warn("Invalid chat history response:", response);
         setChatHistory([]);
       }
     } catch (err) {
@@ -145,16 +164,67 @@ export default function Improve() {
     }
   };
 
+  // Load chat history on mount
+  useEffect(() => {
+    loadChatHistory();
+  }, []); // Empty dependency array for initial load
+
+  // Update chat history when conversation changes
+  useEffect(() => {
+    if (conversationId) {
+      loadChatHistory();
+    }
+  }, [conversationId]);
+
+  // Handle chat selection from history
   const handleChatSelect = async (chatId: string) => {
     try {
+      console.log("Starting chat selection for ID:", chatId);
+      
+      // First set all necessary states to show chat interface
       setShowChat(true);
-      const messages = await getChatMessages(chatId);
-      setChatMessages(messages);
+      setChatLoading(true);
       setSelectedChatId(chatId);
       setConversationId(chatId);
+      
+      // Fetch chat messages from API
+      const response = await getChatMessages(chatId);
+      console.log("Chat response received:", response);
+      
+      if (!response || !response.chat) {
+        console.warn("Invalid chat response received:", response);
+        setChatMessages([]);
+        setError("Failed to load chat messages: Invalid response format");
+        return;
+      }
+
+      // Extract and format messages from the response
+      const messages = response.chat.history || [];
+      console.log("Extracted messages:", messages);
+      
+      // Format messages to ensure consistent structure
+      const formattedMessages = messages.map(msg => ({
+        role: msg.role || (msg.isUser ? 'user' : 'assistant'),
+        content: msg.content || msg.message || ''
+      }));
+      
+      console.log("Formatted messages:", formattedMessages);
+      
+      // Update chat messages and ensure chat interface is shown
+      setChatMessages(formattedMessages);
+      setShowChat(true); // Force show chat interface
+      
+      // Force a re-render after a short delay to ensure state updates are processed
+      // setTimeout(() => {
+      //   setShowChat(true);
+      //   setChatLoading(false);
+      // }, 100);
     } catch (err) {
       console.error("Error loading chat messages:", err);
-      setError("Failed to load chat messages");
+      setError(err instanceof Error ? err.message : "Failed to load chat messages");
+      setChatMessages([]);
+    } finally {
+      setChatLoading(false); // Set loading to false after everything is done
     }
   };
 
@@ -162,7 +232,7 @@ export default function Improve() {
     e.stopPropagation();
     try {
       await deleteChat(chatId);
-      setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+      setChatHistory(prev => prev.filter(chat => chatId));
       if (selectedChatId === chatId) {
         setChatMessages([]);
         setSelectedChatId(null);
@@ -211,7 +281,7 @@ export default function Improve() {
       setChatMessages(prev => [...prev, { role: "assistant", content: response.reply }]);
       
       // Refresh chat history to update last message
-      loadChatHistory();
+      await loadChatHistory();
     } catch (err) {
       console.error("Chat error:", err);
       setError("Failed to send message. Please try again.");
@@ -228,27 +298,36 @@ export default function Improve() {
     return (
       <motion.div
         key={title}
-        className="bg-white dark:bg-slate-800 rounded-lg p-5 shadow-md border border-slate-200 dark:border-slate-700"
+        className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay + (index * 0.1) }}
-        whileHover={{ y: -5, boxShadow: "0 12px 20px -5px rgba(0, 0, 0, 0.1)" }}
+        whileHover={{ y: -5 }}
       >
-        <h4 className="text-lg font-semibold mb-2">{title}</h4>
-        <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{tech.reason}</p>
+        <div className="flex items-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center mr-4 shadow-md">
+            <span className="text-white font-semibold text-lg">{title[0]}</span>
+          </div>
+          <h4 className="text-2xl font-semibold text-gray-800 dark:text-white">{title}</h4>
+        </div>
+        
+        <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">{tech.reason}</p>
         
         {tech.stack && tech.stack.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Technologies</h5>
-              <ul className="space-y-1">
+              <h5 className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-3">Recommended Technologies</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {tech.stack.map((item, i) => (
-                  <li key={i} className="flex items-start text-sm">
-                    <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                    <span>{item}</span>
-                  </li>
+                  <div 
+                    key={i} 
+                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                  >
+                    <Check size={16} className="text-green-500 mr-2 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         )}
@@ -256,68 +335,110 @@ export default function Improve() {
     );
   };
 
+  // Render chat history sidebar
   const renderChatHistory = () => (
     <AnimatePresence mode="wait">
       {showSidebar && (
         <motion.div
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 280, opacity: 1 }}
+          animate={{ width: 320, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed top-24 bottom-24 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-hidden"
+          className="absolute left-0 top-16 h-[calc(100vh-4rem)] w-[320px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex flex-col shadow-xl z-50"
         >
-          <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <h3 className="font-medium text-lg">Chat History</h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              {!Array.isArray(chatHistory) || chatHistory.length === 0 ? (
-                <div className="text-center text-slate-500 dark:text-slate-400 py-8">
-                  No previous chats
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {chatHistory.map(chat => (
-                    <div 
-                      key={chat.id} 
-                      className="group flex items-center justify-between p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                      onClick={() => handleChatSelect(chat.id)}
-                    >
-                      <div className="flex items-center min-w-0">
-                        <MessageSquare className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-                        <div className="truncate">
-                          <span className="text-sm font-medium block truncate">{chat.title}</span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
-                            {new Date(chat.timestamp).toLocaleString()}
-                          </span>
-                        </div>
+          {/* Chat history header */}
+          <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-blue-50 to-white dark:from-slate-800 dark:to-slate-900">
+            <h3 className="font-semibold text-lg text-slate-800 dark:text-white">Chat History</h3>
+          </div>
+          
+          {/* Chat history list */}
+          <div className="flex-1 p-3 space-y-2">
+            {!Array.isArray(chatHistory) || chatHistory.length === 0 ? (
+              <div key="no-chats" className="text-center text-slate-500 dark:text-slate-400 py-8">
+                No previous chats
+              </div>
+            ) : (
+              chatHistory.map((chat) => {
+                if (!chat || ( !chat._id)) {
+                  console.warn("Attempting to render chat with invalid ID:", chat);
+                  return null;
+                }
+                
+                const chatId = chat._id;
+                const timestamp = chat.timestamp || chat.lastUpdated || chat.createdAt;
+                const formattedDate = timestamp ? new Date(timestamp).toLocaleString() : 'No date';
+                
+                // Extract website name from title or use default
+                const fullTitle = chat.title || 'Untitled Chat';
+                const websiteName = fullTitle.split(' - ')[0] || fullTitle;
+                
+                return (
+                  <div 
+                    key={`chat-${chatId}`}
+                    className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                    onClick={() => {
+                      console.log("Chat clicked:", chatId);
+                      handleChatSelect(chatId);
+                    }}
+                  >
+                    {/* Chat icon and title */}
+                    <div className="flex items-center min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center mr-3 flex-shrink-0 shadow-sm">
+                        <MessageSquare className="h-5 w-5 text-white" />
                       </div>
-                      <button
-                        onClick={(e) => handleDeleteChat(chat.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 flex-shrink-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="truncate">
+                        {/* Title with tooltip */}
+                        <div className="relative group/title">
+                          <span className="text-sm font-medium block truncate text-slate-900 dark:text-slate-100" title={fullTitle}>
+                            {websiteName}
+                          </span>
+                          <div className="absolute left-0 bottom-full mb-2 px-3 py-1.5 bg-slate-900 text-white text-sm rounded-lg opacity-0 invisible group-hover/title:opacity-100 group-hover/title:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
+                            {fullTitle}
+                            <div className="absolute left-4 bottom-0 w-2 h-2 bg-slate-900 transform rotate-45 translate-y-1/2"></div>
+                          </div>
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
+                          {formattedDate}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChat(chatId, e);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 flex-shrink-0 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 
+  // Render chat interface
   const renderChatInterface = () => (
     <Card>
       <CardHeader className="border-b">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
+            {/* Back button */}
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setShowChat(false)}
+              onClick={() => {
+                setShowChat(false);
+                setChatMessages([]);
+                setSelectedChatId(null);
+                setConversationId(null);
+              }}
               className="mr-2"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -335,26 +456,34 @@ export default function Improve() {
       </CardHeader>
       <CardContent className="p-0">
         <div className="flex flex-col h-[600px]">
+          {/* Chat messages area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatMessages.map((msg, i) => (
-              <motion.div
-                key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div 
-                  className={`max-w-[80%] rounded-lg p-4 ${
-                    msg.role === 'user' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white'
-                  }`}
+            {chatMessages && chatMessages.length > 0 ? (
+              chatMessages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {msg.content}
-                </div>
-              </motion.div>
-            ))}
+                  <div 
+                    className={`max-w-[80%] rounded-lg p-4 ${
+                      msg.role === 'user' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-white'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No messages yet. Start the conversation!
+              </div>
+            )}
+            {/* Loading indicator */}
             {chatLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 dark:bg-slate-800 rounded-lg p-4">
@@ -368,6 +497,7 @@ export default function Improve() {
             )}
           </div>
           
+          {/* Chat input area */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <form onSubmit={handleChatSubmit} className="flex space-x-2">
               <Input
@@ -395,75 +525,106 @@ export default function Improve() {
   );
 
   const renderMetaInfo = (meta: WebsiteMeta) => {
-    if (!meta) return null;
+    console.log("Rendering meta info with data:", meta);
     
+    if (!meta) {
+      console.warn("No meta data provided to renderMetaInfo");
+      return (
+        <Card className="bg-white dark:bg-gray-800 shadow-lg mb-6 rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl text-gray-800 dark:text-white">
+              Website Meta Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-gray-500 dark:text-gray-400">
+              No metadata available for this website.
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // Check if we have any data to display
+    const hasData = meta.title || meta.description || 
+                   (meta.keywords && meta.keywords.length > 0) || 
+                   (meta.scripts && meta.scripts.length > 0) || 
+                   (meta.metaTags && Object.keys(meta.metaTags).length > 0);
+
     return (
-      <Card className="bg-white dark:bg-gray-800 shadow-lg mb-6">
+      <Card className="bg-white dark:bg-gray-800 shadow-lg mb-6 rounded-xl">
         <CardHeader>
           <CardTitle className="text-xl text-gray-800 dark:text-white">
             Website Meta Information
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {meta.title && (
-              <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Title</h3>
-                <p className="text-gray-600 dark:text-gray-400 break-words">{meta.title}</p>
-              </div>
-            )}
-            {meta.description && (
-              <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Description</h3>
-                <p className="text-gray-600 dark:text-gray-400 break-words">{meta.description}</p>
-              </div>
-            )}
-            {meta.keywords && meta.keywords.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Keywords</h3>
-                <div className="flex flex-wrap gap-2">
-                  {meta.keywords.map((keyword, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
+          {!hasData ? (
+            <div className="text-gray-500 dark:text-gray-400">
+              No metadata available for this website.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {meta.title && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Title</h3>
+                  <p className="text-slate-700 dark:text-slate-300 break-words">{meta.title}</p>
                 </div>
-              </div>
-            )}
-            {meta.scripts && meta.scripts.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Scripts</h3>
-                <div className="space-y-2">
-                  {meta.scripts.map((script, index) => (
-                    <div
-                      key={index}
-                      className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm font-mono overflow-x-auto"
-                    >
-                      {script}
-                    </div>
-                  ))}
+              )}
+              {meta.description && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Description</h3>
+                  <p className="text-slate-700 dark:text-slate-300 break-words">{meta.description}</p>
                 </div>
-              </div>
-            )}
-            {meta.metaTags && Object.keys(meta.metaTags).length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">Meta Tags</h3>
-                <div className="space-y-2">
-                  {Object.entries(meta.metaTags).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm"
-                    >
-                      <span className="font-semibold">{key}:</span> {value}
-                    </div>
-                  ))}
+              )}
+              {meta.keywords && meta.keywords.length > 0 && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Keywords</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {meta.keywords.map((keyword, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all duration-200"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              {meta.scripts && meta.scripts.length > 0 && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Scripts</h3>
+                  <div className="space-y-2">
+                    {meta.scripts.map((script, index) => (
+                      <div
+                        key={index}
+                        className="p-3 bg-white dark:bg-slate-800 rounded-lg text-sm font-mono overflow-x-auto border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200"
+                      >
+                        {script}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {meta.metaTags && Object.keys(meta.metaTags).length > 0 && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Meta Tags</h3>
+                  <div className="space-y-2">
+                    {Object.entries(meta.metaTags).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="p-3 bg-white dark:bg-slate-800 rounded-lg text-sm border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200"
+                      >
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">{key}:</span>
+                        <span className="text-slate-700 dark:text-slate-300 ml-2">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -475,11 +636,11 @@ export default function Improve() {
         {renderChatHistory()}
         
         {/* Main content */}
-        <div className={`flex-1 transition-all duration-300 ${showSidebar ? 'ml-[280px]' : 'ml-0'}`}>
+        <div className={`flex-1 transition-all duration-300 ${showSidebar ? 'ml-[320px]' : 'ml-0'}`}>
           {/* Toggle sidebar button */}
           <button
             onClick={() => setShowSidebar(!showSidebar)}
-            className="fixed left-0 top-1/2 transform -translate-y-1/2 bg-white dark:bg-slate-800 z-30 p-2 rounded-r-md shadow-md border border-l-0 border-slate-200 dark:border-slate-700"
+            className="fixed left-0 top-1/2 transform -translate-y-1/2 bg-white dark:bg-slate-800 z-50 p-2 rounded-r-md shadow-md border border-l-0 border-slate-200 dark:border-slate-700"
           >
             {showSidebar ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -510,7 +671,17 @@ export default function Improve() {
             </div>
 
             <AnimatePresence mode="wait">
-              {!recommendation ? (
+              {showChat ? (
+                <motion.div
+                  key="chat"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {renderChatInterface()}
+                </motion.div>
+              ) : !recommendation ? (
                 <motion.div
                   key="form"
                   initial={{ opacity: 0 }}
@@ -610,52 +781,50 @@ export default function Improve() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                  {showChat ? renderChatInterface() : (
-                    <Card>
-                      <CardHeader className="pb-0">
-                        <motion.div
-                          initial={{ opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex justify-between items-center"
+                  <Card>
+                    <CardHeader className="pb-0">
+                      <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-between items-center"
+                      >
+                        <CardTitle className="text-2xl">Tech Stack Analysis</CardTitle>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setRecommendation(null)}
                         >
-                          <CardTitle className="text-2xl">Tech Stack Analysis</CardTitle>
-                          <Button 
-                            variant="outline"
-                            onClick={() => setRecommendation(null)}
-                          >
-                            New Analysis
-                          </Button>
-                        </motion.div>
-                      </CardHeader>
-                      <CardContent className="pt-6">
-                        {showMetaInfo && renderMetaInfo(recommendation.meta)}
+                          New Analysis
+                        </Button>
+                      </motion.div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      {showMetaInfo && renderMetaInfo(recommendation.meta)}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          {renderTechItem(recommendation.frontend, "Frontend", 0)}
-                          {renderTechItem(recommendation.backend, "Backend", 1)}
-                          {renderTechItem(recommendation.database, "Database", 2)}
-                          {renderTechItem(recommendation.hosting, "Hosting", 3)}
-                          {renderTechItem(recommendation.other, "Other", 4)}
-                        </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {renderTechItem(recommendation.frontend, "Frontend", 0)}
+                        {renderTechItem(recommendation.backend, "Backend", 1)}
+                        {renderTechItem(recommendation.database, "Database", 2)}
+                        {renderTechItem(recommendation.hosting, "Hosting", 3)}
+                        {renderTechItem(recommendation.other, "Other", 4)}
+                      </div>
 
-                        <motion.div
-                          className="mt-8 flex justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.7 }}
+                      <motion.div
+                        className="mt-8 flex justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                      >
+                        <Button 
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                          size="lg"
+                          onClick={handleStartChat}
                         >
-                          <Button 
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                            size="lg"
-                            onClick={handleStartChat}
-                          >
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Ask Questions About This Analysis
-                          </Button>
-                        </motion.div>
-                      </CardContent>
-                    </Card>
-                  )}
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Ask Questions About This Analysis
+                        </Button>
+                      </motion.div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               )}
             </AnimatePresence>

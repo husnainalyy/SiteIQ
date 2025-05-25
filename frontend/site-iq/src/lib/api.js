@@ -66,20 +66,13 @@ export const sendChatMessage = async ({ message, conversationId }) => {
   }
 };
 
-export async function getUserChats() {
-  try {
-    const response = await api.get("/userchat/chats");
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || "Failed to fetch chats");
-  }
-}
 
 export const getChatHistory = async () => {
   try {
-    console.log("Fetching chat history from API...");
+    console.log("Making API call to /userchat/chats...");
     const response = await api.get("/userchat/chats");
-    console.log("API Response:", response.data);
+    console.log("API Response status:", response.status);
+    console.log("API Response data:", response.data);
     
     if (!response.data) {
       console.log("No data received from API");
@@ -88,27 +81,61 @@ export const getChatHistory = async () => {
     
     return response.data;
   } catch (error) {
-    console.log("Get Chat History API Error:", error.response || error);
+    console.error("Get Chat History API Error:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     throw error;
   }
 };
 
 export const getChatMessages = async (chatId) => {
   try {
-    const response = await api.get(`/userchat/chats/${chatId}`);
+    console.log("Fetching messages for chat:", chatId);
+    const response = await api.get(`/userchat/chats/${chatId}`, {
+      timeout: 10000, // 10 second timeout
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.data) {
+      console.warn("No data received in response for chat:", chatId);
+      return [];
+    }
+    
+    console.log("Successfully fetched messages for chat:", chatId, response.data);
     return response.data;
   } catch (error) {
-    console.error("Get Chat Messages API Error:", error);
+    console.log("Get Chat Messages API Error:", {
+      chatId,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timed out while fetching chat messages');
+    }
+    
+    if (error.response?.status === 404) {
+      throw new Error('Chat not found');
+    }
+    
     throw error;
   }
 };
 
 export const deleteChat = async (chatId) => {
   try {
+    console.log("Deleting chat with ID:", chatId);
     const response = await api.delete(`/userchat/chats/${chatId}`);
     return response.data;
   } catch (error) {
-    console.error("Delete Chat API Error:", error);
+    console.log("Delete Chat API Error:", error);
     throw error;
   }
 };
