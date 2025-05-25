@@ -81,7 +81,7 @@ export const getChatHistory = async () => {
     
     return response.data;
   } catch (error) {
-    console.error("Get Chat History API Error:", {
+    console.log("Get Chat History API Error:", {
       status: error.response?.status,
       data: error.response?.data,
       message: error.message
