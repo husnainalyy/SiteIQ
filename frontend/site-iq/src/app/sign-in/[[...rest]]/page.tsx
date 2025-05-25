@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/Button";
@@ -71,7 +71,7 @@ const Login = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <Link to="/forgot-password" className="text-sm text-accent hover:underline">
+                        <Link href="/forgot-password" className="text-sm text-accent hover:underline">
                           Forgot password?
                         </Link>
                       </div>
@@ -141,7 +141,7 @@ const Login = () => {
                     <div className="text-center mt-6">
                       <p className="text-sm text-gray-600">
                         Don't have an account?{" "}
-                        <Link to="/signup" className="text-accent font-medium hover:underline">
+                        <Link href="/signup" className="text-accent font-medium hover:underline">
                           Sign up
                         </Link>
                       </p>
