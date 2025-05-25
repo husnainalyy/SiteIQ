@@ -18,7 +18,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en"  className="dark">
         <body className={inter.className}>
           <QueryProvider>
             <TooltipProvider>

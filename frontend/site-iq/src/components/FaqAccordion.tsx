@@ -54,7 +54,7 @@ export default function FaqAccordion() {
       {faqs.map((faq, index) => (
         <motion.div
           key={index}
-          className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden"
+          className="border border-slate-200 dark:zzborder-slate-800 rounded-lg overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
