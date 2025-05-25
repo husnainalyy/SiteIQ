@@ -1,243 +1,246 @@
-'use client'
+'use client';
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import Features from "@/components/Features";
+import Footer from "@/components/Footer";
+import DemoSection from "@/components/DemoSection";
+import PricingPlans from "@/components/PricingPlans";
+import FaqAccordion from "@/components/FaqAccordion";
+import HeroAnimation from "@/components/HeroAnimation";
+import CtaSection from "@/components/CtaSection";
+import AnimatedFeature from "@/components/AnimatedFeature";
+import { motion } from "framer-motion";
 
-import { useState } from 'react'
+// Optional SEO metadata
 
-export default function TestPage() {
-  const [darkMode, setDarkMode] = useState(false)
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
-    document.documentElement.classList.toggle('dark')
-  }
-
+export default function HomePage() {
   return (
-    <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold gradient-text">CSS Test Suite</h1>
-          <button
-            onClick={toggleDarkMode}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg button-hover transition-all duration-300"
-          >
-            {darkMode ? '☀️ Light' : '🌙 Dark'} Mode
-          </button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        {/* Typography & Colors Test */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Typography & Color System</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 bg-card text-card-foreground rounded-lg border">
-              <h3 className="text-xl font-semibold mb-2">Color Palette</h3>
-              <div className="space-y-2">
-                <p className="text-foreground">Foreground text</p>
-                <p className="text-muted-foreground">Muted text</p>
-                <p className="text-primary">Primary color</p>
-                <p className="text-secondary">Secondary color</p>
-                <p className="text-accent">Accent color</p>
-                <p className="text-destructive">Destructive color</p>
-              </div>
-            </div>
-            
-            <div className="p-6 bg-card text-card-foreground rounded-lg border">
-              <h3 className="text-xl font-semibold mb-2 gradient-text">Gradient Text</h3>
-              <p className="text-sm text-muted-foreground">This demonstrates the gradient text utility</p>
-            </div>
-
-            <div className="p-6 gradient-bg text-white rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Gradient Background</h3>
-              <p className="text-sm opacity-90">Background with gradient colors</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Glass & Cards Effects */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Glass Effects & Cards</h2>
-          <div className="relative bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 p-8 rounded-xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass-card glass-card-dark p-6">
-                <h3 className="text-xl font-semibold mb-2">Glass Card</h3>
-                <p className="text-sm opacity-90">Glassmorphism effect with backdrop blur</p>
+    <div className="min-h-screen bg-white dark:bg-slate-900 overflow-x-hidden">
+      <Navbar />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+       {/* Hero Section */}
+        <section className="relative pt-32 pb-20 overflow-hidden">
+          {/* Background gradient effects */}
+          <div className="absolute top-0 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute top-40 -right-32 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+              <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-2xl lg:max-w-none lg:w-1/2 space-y-6">
+                <motion.div 
+                  className="inline-flex items-center px-3 py-1 rounded-full border border-accent/30 bg-accent/10 text-sm font-medium text-accent"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                >
+                  <span className="w-2 h-2 rounded-full bg-accent mr-2"></span>
+                  Next-gen SEO analysis powered by AI
+                </motion.div>
+                
+                <motion.h1 
+                  className="text-4xl md:text-6xl font-extrabold leading-tight"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  Supercharge Your Website's <span className="gradient-text">SEO Performance</span>
+                </motion.h1>
+                
+                <motion.p 
+                  className="text-lg text-gray-600 md:text-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  SiteIQ analyzes your website, generates comprehensive SEO reports, and provides AI-powered recommendations to boost your online visibility.
+                </motion.p>
+                
+                <motion.div 
+                  className="flex flex-col sm:flex-row gap-4 pt-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.7 }}
+                >
+                  <motion.button
+                    className="gradient-bg text-white px-6 py-3 rounded-md font-medium hover:opacity-90 transition-all"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Try It Free
+                  </motion.button>
+                  
+                  <motion.button
+                    className="border border-gray-300 px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Watch Demo
+                  </motion.button>
+                </motion.div>
               </div>
               
-              <div className="glow-card bg-card/90 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold mb-2">Glow Card</h3>
-                <p className="text-sm text-muted-foreground">Card with rotating glow border effect</p>
-              </div>
+              <motion.div 
+                className="lg:w-1/2"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <HeroAnimation />
+              </motion.div>
             </div>
+            
+            <motion.div 
+              className="pt-16 flex flex-wrap justify-center gap-8 opacity-70"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              transition={{ duration: 0.8, delay: 1.1 }}
+            >
+              <div className="text-lg font-bold text-gray-400">TechCrunch</div>
+              <div className="text-lg font-bold text-gray-400">Forbes</div>
+              <div className="text-lg font-bold text-gray-400">Wired</div>
+              <div className="text-lg font-bold text-gray-400">ProductHunt</div>
+            </motion.div>
           </div>
         </section>
 
-        {/* Animation Tests */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Animation Tests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 bg-card rounded-lg border floating-animation">
-              <div className="w-12 h-12 bg-primary rounded-full mx-auto mb-4"></div>
-              <h3 className="text-center font-semibold">Floating Animation</h3>
-            </div>
+        {/* All-in-one Solution Section */}
+        <section className="py-20 bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl" />
+          <div className="absolute bottom-40 left-20 w-72 h-72 bg-secondary/5 rounded-full filter blur-3xl" />
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <motion.h2 
+                className="text-3xl md:text-4xl font-bold mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                All-in-One <span className="gradient-text">SEO Solution</span>
+              </motion.h2>
+              <motion.p 
+                className="text-lg text-gray-600 max-w-2xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                Everything you need to optimize your website and boost your search engine rankings
+              </motion.p>
+            </motion.div>
             
-            <div className="p-6 bg-card rounded-lg border">
-              <div className="w-12 h-12 bg-secondary rounded-full mx-auto mb-4 pulse-animation"></div>
-              <h3 className="text-center font-semibold">Pulse Animation</h3>
-            </div>
-            
-            <div className="p-6 bg-card rounded-lg border animate-pulse-slow">
-              <div className="w-12 h-12 bg-accent rounded-full mx-auto mb-4"></div>
-              <h3 className="text-center font-semibold">Pulse Slow</h3>
-            </div>
-            
-            <div className="p-6 bg-card rounded-lg border animate-float">
-              <div className="w-12 h-12 bg-destructive rounded-full mx-auto mb-4"></div>
-              <h3 className="text-center font-semibold">Float Animation</h3>
-            </div>
-          </div>
-        </section>
-
-        {/* Hover Effects */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Hover Effects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 bg-card rounded-lg border card-hover">
-              <h3 className="text-xl font-semibold mb-2">Card Hover</h3>
-              <p className="text-sm text-muted-foreground">Hover to see lift effect</p>
-            </div>
-            
-            <button className="p-6 bg-primary text-primary-foreground rounded-lg button-hover">
-              <h3 className="text-xl font-semibold mb-2">Button Hover</h3>
-              <p className="text-sm opacity-90">Hover for overlay effect</p>
-            </button>
-            
-            <div className="p-6 bg-card rounded-lg border">
-              <h3 className="text-xl font-semibold mb-2 text-underline-hover cursor-pointer">
-                Text Underline Hover
-              </h3>
-              <p className="text-sm text-muted-foreground">Hover the title above</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Special Effects */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Special Effects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-card rounded-lg border">
-              <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 pulse-blue"></div>
-              <h3 className="text-center font-semibold">Pulse Blue Effect</h3>
-            </div>
-            
-            <button className="p-6 bg-accent text-accent-foreground rounded-lg btn-glow relative">
-              <h3 className="text-xl font-semibold mb-2">Glow Button</h3>
-              <p className="text-sm opacity-90">Button with rotating glow</p>
-            </button>
-          </div>
-        </section>
-
-        {/* Background Patterns */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Background Patterns</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-48 bg-grid-white/5 bg-gray-900 rounded-lg flex items-center justify-center">
-              <p className="text-white font-semibold">Grid Pattern (White)</p>
-            </div>
-            
-            <div className="h-48 bg-grid-black/5 bg-gray-100 rounded-lg flex items-center justify-center">
-              <p className="text-gray-900 font-semibold">Grid Pattern (Black)</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Scrollable Content Test */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Scrollbar Tests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="font-semibold mb-2">Hidden Scrollbar</h3>
-              <div className="h-32 overflow-y-auto scrollbar-hide bg-muted/50 p-4 rounded">
-                {Array.from({length: 20}, (_, i) => (
-                  <p key={i} className="py-1">Line {i + 1} - Hidden scrollbar content</p>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="font-semibold mb-2">Thin Scrollbar</h3>
-              <div className="h-32 overflow-y-auto scrollbar-thin bg-muted/50 p-4 rounded">
-                {Array.from({length: 20}, (_, i) => (
-                  <p key={i} className="py-1">Line {i + 1} - Thin scrollbar content</p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Form Elements Test */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Form Elements</h2>
-          <div className="bg-card rounded-lg border p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Input with Focus Ring</label>
-              <input 
-                type="text" 
-                placeholder="Focus me to see ring effect"
-                className="w-full px-3 py-2 bg-input border border-border rounded-md"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>}
+                title="Comprehensive SEO Analysis"
+                description="Get detailed insights into your website's search engine optimization status with actionable recommendations."
+                delay={0.1}
+              />
+              
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>}
+                title="Performance Optimization"
+                description="Improve your website's loading speed and overall performance with our AI-powered suggestions."
+                delay={0.2}
+              />
+              
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>}
+                title="Keyword Analysis"
+                description="Discover the most effective keywords for your business and learn how to implement them strategically."
+                delay={0.3}
+              />
+              
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>}
+                title="Content Suggestions"
+                description="Get AI-powered content recommendations to improve your website's relevance and engagement."
+                delay={0.4}
+              />
+              
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+                </svg>}
+                title="Tech Stack Recommendations"
+                description="Receive customized technology recommendations based on your business needs and website goals."
+                delay={0.5}
+              />
+              
+              <AnimatedFeature 
+                icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>}
+                title="AI-Powered Chatbot"
+                description="Get instant answers and recommendations for your website through our intelligent SEO assistant."
+                delay={0.6}
               />
             </div>
+          </div>
+        </section>
+
+        {/* Features Section (Existing component) */}
+        <Features />
+        
+        {/* Demo Section */}
+        <DemoSection />
+        
+        {/* Pricing Section */}
+        <PricingPlans />
+        
+        {/* FAQ Section */}
+        <section id="faq" className="py-20 bg-white dark:bg-slate-900 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+          
+          <div className="container px-4 mx-auto relative z-10">
+            <motion.div 
+              className="text-center mb-16 max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Frequently Asked <span className="gradient-text">Questions</span>
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-400">
+                Find answers to common questions about SiteIQ and how it can help improve your SEO
+              </p>
+            </motion.div>
             
-            <div>
-              <label className="block text-sm font-medium mb-2">Button Focus Test</label>
-              <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
-                Focus me with Tab key
-              </button>
+            <div className="max-w-3xl mx-auto">
+              <FaqAccordion />
             </div>
           </div>
         </section>
 
-        {/* Fade Animations */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Fade Animations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 bg-card rounded-lg border animate-fade-in">
-              <h3 className="font-semibold">Fade In</h3>
-              <p className="text-sm text-muted-foreground">Animates on page load</p>
-            </div>
-            
-            <div className="p-6 bg-card rounded-lg border animate-scale-in">
-              <h3 className="font-semibold">Scale In</h3>
-              <p className="text-sm text-muted-foreground">Scales from 95% to 100%</p>
-            </div>
-            
-            <div className="p-6 bg-card rounded-lg border animate-accordion-down">
-              <h3 className="font-semibold">Accordion Down</h3>
-              <p className="text-sm text-muted-foreground">Height animation</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Font Test */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold mb-6">Font Family Test</h2>
-          <div className="bg-card rounded-lg border p-6">
-            <p className="font-inter text-lg mb-2">Inter Font Family (default)</p>
-            <p className="font-sans text-lg mb-2">Sans Font Family</p>
-            <p className="text-sm text-muted-foreground">
-              Both should render with Inter font from Google Fonts
-            </p>
-          </div>
-        </section>
-      </main>
-
-      <footer className="bg-muted/50 mt-12 py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground">
-            CSS Test Suite Complete ✅ | All styles and animations should be working properly
-          </p>
-        </div>
-      </footer>
+        {/* CTA Section */}
+        <CtaSection />
+        
+        {/* Footer */}
+        <Footer />
+      </motion.div>
     </div>
-  )
+  );
 }
