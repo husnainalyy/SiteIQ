@@ -12,9 +12,9 @@ tags:
     description: All endpoints related to SEO report generation and management
 
 paths:
-  /api/seoreports/create:
+  /api/seoreports/generate:
     post:
-      summary: Create a new SEO report
+      summary: Generate and score a new SEO report
       tags: [SEO Reports]
       requestBody:
         required: true
@@ -28,72 +28,17 @@ paths:
               properties:
                 phrase:
                   type: string
-                  example: buy shoes online
+                  example: "buy shoes online"
                 domain:
                   type: string
-                  example: example.com
+                  example: "example.com"
       responses:
-        '201':
-          description: Report created successfully
+        '200':
+          description: Report created or updated successfully
         '400':
           description: Missing required fields
         '500':
           description: Internal server error
-
-  /api/seoreports/tempget/{jid}:
-    get:
-      summary: Retrieve SEO report from external API and update database
-      tags: [SEO Reports]
-      parameters:
-        - in: path
-          name: jid
-          required: true
-          schema:
-            type: string
-          description: Job ID for the report
-      responses:
-        '200':
-          description: Report updated and returned
-        '202':
-          description: Job not ready yet
-        '400':
-          description: Missing jid parameter
-        '404':
-          description: Report not found
-        '500':
-          description: Internal server error
-
-  /api/seoreports/score:
-    post:
-      summary: Score a phrase based on a completed SEO report
-      tags: [SEO Reports]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - jid
-                - phrase
-                - domain
-              properties:
-                jid:
-                  type: string
-                  example: job_123456789
-                phrase:
-                  type: string
-                  example: running shoes
-                domain:
-                  type: string
-                  example: example.com
-      responses:
-        '200':
-          description: Score calculated and saved
-        '400':
-          description: Missing fields
-        '404':
-          description: Report or phrase not found
 
   /api/seoreports/delete/{jid}:
     delete:
@@ -126,12 +71,12 @@ paths:
           required: true
           schema:
             type: string
-          description: Job ID to look up in the database
+          description: Job ID for the report
       responses:
         '200':
-          description: Report returned successfully
+          description: Report found and returned
         '400':
-          description: Missing jid
+          description: Missing jid parameter
         '404':
           description: Report not found
         '500':
