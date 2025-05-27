@@ -39,6 +39,7 @@ const PricingPlans = () => {
         "API access"
       ],
       buttonText: "Subscribe",
+      buttonLink: "/subscribe",
       buttonVariant: "default",
       popular: true,
       delay: 0.5,

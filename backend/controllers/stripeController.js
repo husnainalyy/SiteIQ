@@ -1,68 +1,127 @@
 import Stripe from 'stripe';
-
+import User from '../models/User.js'; // Assuming you have a User model
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const YOUR_DOMAIN = process.env.FRONTEND_URL || 'http://localhost:5000';
-
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 /**
  * Controller for creating a Stripe Checkout session.
  * Handles creating a checkout session for a subscription or product purchase.
  */
 export const createCheckoutSession = async (req, res) => {
   try {
-    // Get the product/price details using the provided lookup_key in the request body
+    if (!req.auth || !req.auth.userId) {
+      return res.status(401).json({ error: 'Unauthorized: User not authenticated' });
+    }
+
+    // Find user by clerkUserId (adjust field name as per your schema)
+    const user = await User.findOne({ clerkUserId: req.auth.userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Block if user is already premium
+    if (user.membership === 'premium') {
+      return res.status(400).json({ error: 'You are already a premium user.' });
+    }
+
     const prices = await stripe.prices.list({
-      lookup_keys: [req.body.lookup_key],  // Lookup key for price (e.g., product's price ID)
-      expand: ['data.product'],  // Expanding the product details as well
+      lookup_keys: [req.body.lookup_key],
+      expand: ['data.product'],
     });
 
-    // If no prices are found, return a bad request error
     if (!prices.data.length) {
       return res.status(400).json({ error: 'No price found for the provided lookup key' });
     }
 
-    // Create a Checkout session with the necessary details
+    // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',  // Subscription mode (can also be 'payment' for one-time payments)
+      mode: 'subscription',
       line_items: [{
-        quantity: 1,  // Quantity of the item (in this case 1)
-        price: prices.data[0].id,  // The price ID retrieved from Stripe
+        quantity: 1,
+        price: prices.data[0].id,
       }],
-      success_url: `${YOUR_DOMAIN}/success?session_id={CHECKOUT_SESSION_ID}`,  // URL to redirect after success
-      cancel_url: `${YOUR_DOMAIN}/cancel`,  // URL to redirect if the user cancels the payment
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      metadata: { userId: req.auth.userId },
     });
 
-    // Respond with the session URL to redirect the user to Stripe's hosted checkout page
-    res.json({ url: session.url });
+    console.log(`Created checkout session for user ${req.auth.userId} with price ${prices.data[0].id}`);
 
+    res.json({ url: session.url });
   } catch (error) {
     console.error('Error during Stripe session creation:', error);
-    // Return error response if something goes wrong
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
 /**
  * Webhook handler to receive and process events sent by Stripe.
  * Webhooks are essential for handling events like payment success, subscription updates, etc.
  */
 // Controller for handling Stripe Webhooks
-export const handleWebhook = (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  
-    let event;
-  
-    try {
-      // Verify the webhook signature to ensure it's from Stripe
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-      console.error('Webhook Error:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+export const handleWebhook = async (req, res) => {
+     const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook Error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object;
+      const subscriptionId = session.subscription;
+      const customerId = session.customer;
+      const userId = session.metadata?.userId;
+
+      if (!subscriptionId) {
+        console.warn('No subscription ID in checkout session (likely a one-time payment)');
+        break;
+      }
+
+      if (!userId) {
+        console.warn('No userId found in checkout session metadata');
+        break;
+      }
+
+      try {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const plan = subscription.items.data[0].price.lookup_key;
+
+        const user = await User.findOne({ clerkUserId: userId });
+        
+        if (!user) {
+          console.warn(`User ${userId} not found`);
+        } 
+         if (user.membership === 'premium') {
+          return res.status(400).json({ error: 'You are already a premium user.' });
+        } else {
+          user.membership = 'premium';
+          user.stripe = user.stripe || {};
+          user.stripe.customerId = customerId;
+          user.stripe.subscriptionId = subscriptionId;
+          user.stripe.isActive = true;
+          user.stripe.plan = plan;
+          
+  try {
+    await user.save();
+    console.log(`User ${userId} upgraded to premium with subscription ${subscriptionId}`);
+  } catch (error) {
+    console.error('Error saving user:', error);
+  }
+        } 
+      } catch (err) {
+        console.error('Failed to retrieve subscription or update user:', err);
+      }
+      break;
     }
-  
-    // Handle different Stripe events
-    switch (event.type) {
       case 'payment_intent.created':
         const paymentIntentCreated = event.data.object;
         // Action: Log or initiate actions like email notifications, etc.
@@ -133,13 +192,26 @@ export const handleWebhook = (req, res) => {
         // Update your system to mark the invoice as paid and process further.
         break;
   
-      case 'invoice.payment_failed':
-        const invoicePaymentFailed = event.data.object;
-        // Action: Notify the customer of failed payment, retry logic, or update order status.
-        console.log(`Invoice Payment Failed: ID = ${invoicePaymentFailed.id}, Status = ${invoicePaymentFailed.status}`);
-        // Send an email to the user or retry the payment process.
-        break;
-  
+      case 'invoice.payment_failed': {
+  const invoice = event.data.object;
+  const customerId = invoice.customer;
+
+  // Find user by customerId (make sure you store it in user.stripe.customerId)
+  const user = await User.findOne({ 'stripe.customerId': customerId });
+
+  if (user) {
+    // Update user subscription status or notify the user
+    user.stripe.isActive = false;
+    await user.save();
+
+    console.log(`Payment failed for user ${user.clerkUserId}, subscription paused or canceled.`);
+    
+    // You can also send an email or notification here
+  } else {
+    console.warn(`User not found for customerId ${customerId} on payment failure.`);
+  }
+  break;
+}
       case 'payment_method.attached':
         const paymentMethodAttached = event.data.object;
         // Action: Save the payment method for the user, or trigger payment verification.
@@ -177,3 +249,19 @@ export const handleWebhook = (req, res) => {
     res.json({ received: true });
   };
   
+
+
+
+
+
+
+
+
+
+  /* Scenario           | Card Number           |
+| ------------------ | --------------------- |
+| Declined card      | `4000 0000 0000 9995` |
+| Insufficient funds | `4000 0000 0000 9995` |
+| Incorrect CVC      | `4000 0000 0000 0127` |
+| Expired card       | `4000 0000 0000 0069` |
+*/

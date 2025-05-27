@@ -66,10 +66,10 @@ const Navbar = () => {
               </li>
               <li className="relative group">
                 <Link
-                  href="/pricing"
+                  href="/subscribe"
                   className="font-medium hover:text-accent transition-colors"
                 >
-                  Pricing
+                  Upgrade to Premium
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
@@ -121,11 +121,11 @@ const Navbar = () => {
                 Analyze
               </Link>
               <Link 
-                href="/pricing" 
+                href="/subscribe" 
                 className="font-medium hover:text-accent transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Pricing
+                Subscribe
               </Link>
               <Link 
                 href="/login" 

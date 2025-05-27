@@ -39,10 +39,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const currentChat = chatHistory.find(chat => chat._id === selectedChatId);
   const chatTitle = currentChat?.websiteUrl || 'AI Assistant';
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const isInitialLoad = React.useRef(true);
 
-  // Scroll to bottom when new messages arrive
+  // Scroll to bottom only for new messages, not when loading history
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isInitialLoad.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+    isInitialLoad.current = false;
   }, [chatMessages]);
 
   const formatAIResponse = (content: string) => {
@@ -216,6 +220,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onNewAnalysis();
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onChatSubmit(e);
+  };
+
   return (
     <Card>
       <CardHeader className="border-b">
@@ -246,7 +255,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <CardContent className="p-0">
         <div className="flex flex-col h-[600px]">
           {/* Chat messages area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesEndRef}>
             {!selectedChatId && chatMessages.length === 0 && (
               <motion.div
                 className="flex justify-start"
@@ -292,17 +301,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
           
           {/* Chat input area */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <form onSubmit={onChatSubmit} className="flex space-x-2">
+            <form onSubmit={handleSubmit} className="flex space-x-2">
               <Input
                 placeholder="Ask a question about your tech stack analysis..."
                 value={chatInput}
                 onChange={(e) => onChatInputChange(e.target.value)}
                 className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
               <Button 
                 type="submit"

@@ -38,11 +38,15 @@ app.use(clerkMiddleware());
 
 
 //middle wares 
-app.use(express.json()); // JSON for other routes
 
-app.use('/api/webhooks', express.raw({ type: 'application/json' })); // Raw body for webhooks
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' })); // Raw body for webhooks
+app.use(express.json()); // JSON for other routes
 app.use("/api/chat", techstackChatRoutes);
+
 app.use('/api/stripe', stripeRoutes); // Mount Stripe routes
+
+
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -57,7 +61,6 @@ app.get('/', (req, res) => {
   res.send('Welcome to SiteIQ Backend!');
 });
 
-app.use(express.json()); // JSON for other routes
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
