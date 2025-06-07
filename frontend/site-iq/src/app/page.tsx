@@ -200,7 +200,7 @@ export default function HomePage() {
         </section>
 
         {/* Features Section (Existing component) */}
-        <Features />
+       {/* <Features />*/}
         
         {/* Demo Section */}
         <DemoSection />

@@ -139,3 +139,21 @@ export const deleteChat = async (chatId) => {
     throw error;
   }
 };
+
+
+//stripe payment api call
+const backendURL = process.env.NEXT_PUBLIC_API_BASE_URL
+export const createCheckoutSession = async (lookup_key, userId) => {
+  if (!backendURL) {
+    throw new Error('API base URL is not defined');
+  }
+  const res = await fetch(`${backendURL}/stripe/create-checkout-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lookup_key, userId })
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create Stripe session');
+  return data;
+};

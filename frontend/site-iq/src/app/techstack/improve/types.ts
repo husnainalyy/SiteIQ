@@ -1,6 +1,8 @@
 export interface TechStack {
   stack: string[];
   reason: string;
+  estimated_improvement?: string;
+  problems?: string[];
 }
 
 export interface WebsiteMeta {
@@ -27,6 +29,9 @@ export interface ChatHistory {
   timestamp?: string;
   lastUpdated?: string;
   createdAt?: string;
+  websiteUrl?: string;
+  useCase?: string;
+  id?: string;
   history?: Array<{
     role?: string;
     content?: string;
