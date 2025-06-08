@@ -17,14 +17,14 @@
                 type: String,
                 required: true,
             },
-            seoReport: {
+            seoReport: [{
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "SeoReport",
-            },
-            seoRecommendation: {
+            }],
+            seoRecommendation: [{
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "SeoRecommendation",
-            },
+            }],
             aiRecommendations: {
                 type: Object,
                 default: {},
