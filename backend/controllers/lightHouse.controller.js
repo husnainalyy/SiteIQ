@@ -1,31 +1,33 @@
 import SeoReport from '../models/seoModel.js';
+import Website from '../models/website.js'; // Assuming you have this
 import lighthouseScrapper from '../services/light_house_scrapper.js';
 import lighthouseService from '../services/light_house_services.js';
 
 const { scrapeWebsite } = lighthouseScrapper;
 const { runLighthouse } = lighthouseService;
 
-// ✅ CREATE
+// ✅ CREATE SEO REPORT + Trigger Analysis
 const analyzeWebsite = async (req, res) => {
   try {
-    console.log("✅ Step 1: Authenticating user...");
     const clerkUserId = req.auth?.userId;
     if (!clerkUserId) {
-      console.warn("❌ Unauthorized - no user ID found.");
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log("✅ Step 2: Extracting domain from request body...");
-    const { domain } = req.body;
-    if (!domain) {
-      console.warn("❌ Missing required field: domain.");
-      return res.status(400).json({ error: 'Missing required field: domain.' });
+    const { websiteId } = req.body;
+    if (!websiteId) {
+      return res.status(400).json({ error: 'Missing required field: websiteId' });
     }
 
-    console.log("✅ Step 3: Creating SEO report entry...");
+    const website = await Website.findById(websiteId);
+    if (!website) {
+      return res.status(404).json({ error: 'Website not found' });
+    }
+    
+
     const newReport = new SeoReport({
       clerkUserId,
-      domain,
+      website: website._id,
       phraseResults: [],
       lighthouse: {
         logs: ["🔄 Analysis initialized..."],
@@ -37,8 +39,12 @@ const analyzeWebsite = async (req, res) => {
 
     await newReport.save();
 
-    console.log("✅ Step 4: Kicking off background analysis...");
-    processAnalysis(newReport._id, domain);
+    // Add reference to website's seoReport array (if applicable)
+    await Website.findByIdAndUpdate(website._id, {
+      $push: { seoReport: newReport._id }
+    });
+
+    processAnalysis(newReport._id, website.domain); // Still passing domain to scrapers
 
     return res.status(202).json({
       message: 'Analysis started',
@@ -50,7 +56,7 @@ const analyzeWebsite = async (req, res) => {
   }
 };
 
-// 🔧 Background Processing
+// 🔧 Background Processing Logic
 const processAnalysis = async (reportId, domain) => {
   try {
     console.log("🔍 Running Lighthouse and SEO Scraper...");
@@ -59,7 +65,7 @@ const processAnalysis = async (reportId, domain) => {
       runLighthouse(domain),
     ]);
 
-    console.log("✅ Updating report with results...");
+    console.log("✅ Updating SEO report with results...");
     await SeoReport.findByIdAndUpdate(reportId, {
       $set: {
         'lighthouse.lighthouseReport': lighthouseResult,
@@ -90,7 +96,7 @@ const processAnalysis = async (reportId, domain) => {
 const getReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const report = await SeoReport.findById(id);
+    const report = await SeoReport.findById(id).populate("website");
 
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
@@ -103,7 +109,7 @@ const getReport = async (req, res) => {
   }
 };
 
-// 📄 READ ALL (for current user)
+// 📄 READ ALL for current user
 const getAllReports = async (req, res) => {
   try {
     const clerkUserId = req.auth?.userId;
@@ -111,7 +117,10 @@ const getAllReports = async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const reports = await SeoReport.find({ clerkUserId }).sort({ createdAt: -1 });
+    const reports = await SeoReport.find({ clerkUserId })
+      .populate("website")
+      .sort({ createdAt: -1 });
+
     return res.status(200).json(reports);
   } catch (error) {
     console.error("❌ Error fetching reports:", error.message || error);
@@ -119,7 +128,7 @@ const getAllReports = async (req, res) => {
   }
 };
 
-// 📝 UPDATE (e.g., optional metadata update)
+// 📝 UPDATE
 const updateReport = async (req, res) => {
   try {
     const { id } = req.params;
@@ -144,10 +153,14 @@ const deleteReport = async (req, res) => {
     const { id } = req.params;
 
     const deleted = await SeoReport.findByIdAndDelete(id);
-
     if (!deleted) {
       return res.status(404).json({ error: 'Report not found' });
     }
+
+    // Remove reference from website
+    await Website.findByIdAndUpdate(deleted.website, {
+      $pull: { seoReport: deleted._id }
+    });
 
     return res.status(200).json({ message: 'Report deleted successfully' });
   } catch (error) {
@@ -157,9 +170,9 @@ const deleteReport = async (req, res) => {
 };
 
 export {
-  analyzeWebsite,  // ✅ CREATE
-  getReport,        // 📄 READ ONE
-  getAllReports,    // 📄 READ ALL
-  updateReport,     // 📝 UPDATE
-  deleteReport      // ❌ DELETE
+  analyzeWebsite,
+  getReport,
+  getAllReports,
+  updateReport,
+  deleteReport
 };
