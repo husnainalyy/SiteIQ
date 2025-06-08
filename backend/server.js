@@ -18,7 +18,10 @@ import historyRoutes from './routes/history.routes.js';
 import lighthouseRoutes from "./routes/lightHouse.routes.js";
 import seoRoutes from './routes/seoRoutes.js';
 import techStackRoutes from './routes/techstackroute.js';
-import chatRouter from './routes/techstackChatRouter.js';
+import techstackChatRoutes from './routes/techstackChatRoute.js';
+import stripeRoutes from './routes/stripeRoute.js';
+import userChatRoutes from "./routes/userChatRoutes.js";
+
 
 
 // Initialize Express
@@ -27,7 +30,7 @@ const PORT = process.env.PORT || 4500;
 
 // Middleware
 app.use(cors({
-  origin: '*', // Or '*' for testing
+  origin: 'http://localhost:3000', // Or '*' for testing
   credentials: true
 }));
 
@@ -35,7 +38,14 @@ app.use(clerkMiddleware());
 
 
 //middle wares 
+
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' })); // Raw body for webhooks
 app.use(express.json()); // JSON for other routes
+app.use("/api/chat", techstackChatRoutes);
+
+app.use('/api/stripe', stripeRoutes); // Mount Stripe routes
+
+
 
 
 // Connect to MongoDB
@@ -59,7 +69,8 @@ app.use("/api/lighthouse", lighthouseRoutes);
 
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use("/api/chat", chatRouter);
+app.use("/api/userchat", userChatRoutes);
+
 
 
 

@@ -10,7 +10,7 @@ const Dashboard = () => {
     </div>
     </ClerkProvider>
         
-  );
+  );  
 };
 
 export default Dashboard;

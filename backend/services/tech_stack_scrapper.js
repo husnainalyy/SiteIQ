@@ -1,8 +1,8 @@
 import axios from "axios";
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
 
 // Fetch website HTML
-async function fetchWebsiteHTML(url) {
+export async function fetchWebsiteHTML(url) {
   try {
     const { data } = await axios.get(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -15,12 +15,11 @@ async function fetchWebsiteHTML(url) {
 }
 
 // Extract metadata & scripts
-function extractWebsiteInfo(html) {
+export function extractWebsiteInfo(html) {
   const $ = cheerio.load(html);
   const metaTags = {};
   const scripts = [];
 
-  // Extract <meta> tags
   $("meta").each((_, el) => {
     const name = $(el).attr("name") || $(el).attr("property");
     const content = $(el).attr("content");
@@ -29,7 +28,6 @@ function extractWebsiteInfo(html) {
     }
   });
 
-  // Extract <script> sources
   $("script").each((_, el) => {
     const src = $(el).attr("src");
     if (src) scripts.push(src);
@@ -37,5 +35,3 @@ function extractWebsiteInfo(html) {
 
   return { metaTags, scripts };
 }
-
-module.exports = { fetchWebsiteHTML, extractWebsiteInfo };

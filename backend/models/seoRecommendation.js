@@ -7,10 +7,11 @@ const seoRecommendationSchema = new mongoose.Schema(
       ref: "User", // Reference to User model
       required: true,
     },
-    domain: {
-      type: String,
-      required: true,
-    },
+        website: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Website",
+            required: true,
+        },
     seoReport: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SeoReport", // Reference to SeoReport model
