@@ -33,7 +33,7 @@ const Navbar = () => {
           : "bg-transparent py-5"
       }`}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 ">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center transform transition-transform group-hover:scale-110">
@@ -66,10 +66,10 @@ const Navbar = () => {
               </li>
               <li className="relative group">
                 <Link
-                  href="/pricing"
+                  href="/subscribe"
                   className="font-medium hover:text-accent transition-colors"
                 >
-                  Pricing
+                  Upgrade to Premium
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
@@ -82,10 +82,10 @@ const Navbar = () => {
               className="hidden sm:flex hover:border-accent hover:text-accent transition-all"
               asChild
             >
-              <Link href="/login">Login</Link>
+              <Link href="/sign-in">Login</Link>
             </Button>
             <Button className="gradient-bg relative overflow-hidden group" asChild>
-              <Link href="/signup">
+              <Link href="/sign-up">
                 <span className="relative z-10">Get Started</span>
                 <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
               </Link>
@@ -121,11 +121,11 @@ const Navbar = () => {
                 Analyze
               </Link>
               <Link 
-                href="/pricing" 
+                href="/subscribe" 
                 className="font-medium hover:text-accent transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Pricing
+                Subscribe
               </Link>
               <Link 
                 href="/login" 

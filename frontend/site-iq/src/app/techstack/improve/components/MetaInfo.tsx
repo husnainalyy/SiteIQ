@@ -70,7 +70,7 @@ export const MetaInfo: React.FC<MetaInfoProps> = ({ meta }) => {
                 </div>
               </div>
             )}
-            {meta.scripts && meta.scripts.length > 0 && (
+            {/* {meta.scripts && meta.scripts.length > 0 && (
               <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
                 <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Scripts</h3>
                 <div className="space-y-2">
@@ -84,7 +84,7 @@ export const MetaInfo: React.FC<MetaInfoProps> = ({ meta }) => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
             {meta.metaTags && Object.keys(meta.metaTags).length > 0 && (
               <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
                 <h3 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Meta Tags</h3>

@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: false },
       plan: {
         type: String,
-        enum: ["basic", "pro", "enterprise"],
+        enum: ["basic", "pro", "enterprise","pro_monthly", "pro_yearly"],
         default: "basic",
       },
     },

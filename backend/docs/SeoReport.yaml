@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: SiteIQ SEO Reports API
-  description: API for generating, retrieving, scoring, and managing SEO reports.
+  description: API for generating, retrieving, scoring, and managing SEO reports scoped by user and website.
   version: 1.0.0
 
 servers:
@@ -10,6 +10,54 @@ servers:
 tags:
   - name: SEO Reports
     description: All endpoints related to SEO report generation and management
+
+components:
+  schemas:
+    Website:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60c72b2f9b1d8c4f4c8b4567"
+        user:
+          type: string
+          description: Clerk User ID
+        url:
+          type: string
+          example: "https://example.com"
+        domain:
+          type: string
+          example: "example.com"
+
+    PhraseResult:
+      type: object
+      properties:
+        jid:
+          type: string
+          example: "JID123"
+        phrase:
+          type: string
+        score:
+          type: number
+        data:
+          type: object
+
+    SeoReport:
+      type: object
+      properties:
+        _id:
+          type: string
+        clerkUserId:
+          type: string
+        website:
+          $ref: '#/components/schemas/Website'
+        phraseResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhraseResult'
+        createdAt:
+          type: string
+          format: date-time
 
 paths:
   /api/seoreports/generate:
@@ -35,6 +83,10 @@ paths:
       responses:
         '200':
           description: Report created or updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoReport'
         '400':
           description: Missing required fields
         '500':
@@ -42,7 +94,7 @@ paths:
 
   /api/seoreports/delete/{jid}:
     delete:
-      summary: Delete a phrase result or entire report by jid
+      summary: Delete a phrase result or entire report by job ID
       tags: [SEO Reports]
       parameters:
         - in: path
@@ -53,7 +105,7 @@ paths:
           description: Job ID of the phrase/report to delete
       responses:
         '200':
-          description: Phrase or report deleted
+          description: Phrase or report deleted successfully
         '400':
           description: Missing jid
         '404':
@@ -63,7 +115,7 @@ paths:
 
   /api/seoreports/return/{jid}:
     get:
-      summary: Return the saved SEO report data for a given jid
+      summary: Return the saved SEO report data for a given job ID
       tags: [SEO Reports]
       parameters:
         - in: path
@@ -75,6 +127,10 @@ paths:
       responses:
         '200':
           description: Report found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoReport'
         '400':
           description: Missing jid parameter
         '404':

@@ -20,6 +20,12 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
   onDeleteChat,
   onToggleSidebar,
 }) => {
+  const handleChatSelect = (chatId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChatSelect(chatId);
+  };
+
   return (
     <>
       <AnimatePresence mode="wait">
@@ -60,7 +66,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                     <div 
                       key={`chat-${chatId}`}
                       className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-                      onClick={() => onChatSelect(chatId)}
+                      onClick={handleChatSelect(chatId)}
                     >
                       {/* Chat icon and title */}
                       <div className="flex items-center min-w-0 flex-1">
@@ -86,7 +92,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                       
                       {/* Delete button */}
                       <button
-                        onClick={(e) => onDeleteChat(chatId, e)}
+                        onClick={(e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteChat(chatId, e);
+                        }}
                         className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 flex-shrink-0 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                       >
                         <Trash2 className="h-4 w-4" />
