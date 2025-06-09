@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: false },
       plan: {
         type: String,
-        enum: ["basic", "pro", "enterprise"],
+        enum: ["basic", "pro", "enterprise","pro_monthly", "pro_yearly"],
         default: "basic",
       },
     },
@@ -225,6 +225,10 @@ UserSchema.methods.saveChatMessage = async function (
   await this.save();
   return this;
 };
+
+
+
+
 
 const User = mongoose.model("User", UserSchema);
 export default User;

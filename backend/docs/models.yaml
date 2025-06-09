@@ -1,61 +1,121 @@
+openapi: 3.0.3
+info:
+  title: SEO Analytics API
+  version: 1.0.0
+tags:
+  - name: Models
 components:
   schemas:
-    ChatMessage:
-      type: object
-      properties:
-        userMessage:
-          type: string
-          maxLength: 500
-          example: "How can I improve SEO for my homepage?"
-        botResponse:
-          type: string
-          maxLength: 1000
-          example: "You can improve your SEO by adding meta tags, optimizing keywords, and improving page speed."
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-05-09T12:34:56.789Z"
 
-    Website:
+    TechstackChat:
       type: object
+      required:
+        - clerkUserId
+        - sessionId
+        - history
       properties:
-        url:
+        clerkUserId:
           type: string
-          format: uri
-          example: "https://example.com"
-        seoReport:
-          $ref: "#/components/schemas/SeoReport"
-        seoRecommendations:
+        sessionId:
+          type: string
+        mode:
+          type: string
+          enum: [improve]
+          default: improve
+        history:
           type: array
           items:
             type: object
-        html:
-          type: string
-          description: Raw HTML of the website
-        css:
-          type: string
-          description: Raw CSS of the website
-        chatHistory:
-          type: array
-          items:
-            $ref: "#/components/schemas/ChatMessage"
-        chatCount:
-          type: number
-          example: 5
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
         createdAt:
           type: string
           format: date-time
+        lastAccessed:
+          type: string
+          format: date-time
+
+    SeoReport:
+      type: object
+      required:
+        - clerkUserId
+        - domain
+      properties:
+        clerkUserId:
+          type: string
+        domain:
+          type: string
+        scanDate:
+          type: string
+          format: date-time
+        phraseResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhraseResult'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PhraseResult:
+      type: object
+      required:
+        - phrase
+        - jid
+      properties:
+        phrase:
+          type: string
+        jid:
+          type: string
+        rawResponse:
+          type: object
+        scores:
+          type: object
+          properties:
+            rankingPosition:
+              type: number
+              default: 0
+            keywordRelevance:
+              type: number
+              default: 0
+            richSnippets:
+              type: number
+              default: 0
+            urlStructure:
+              type: number
+              default: 0
+            visibility:
+              type: number
+              default: 0
+            competitorAnalysis:
+              type: number
+              default: 0
+            paginationStrength:
+              type: number
+              default: 0
+            total:
+              type: number
+              default: 0
 
     WebsiteHistory:
       type: object
+      required:
+        - userId
+        - url
+        - action
       properties:
-        id:
+        userId:
           type: string
         url:
           type: string
-          format: uri
         seoReport:
-          $ref: "#/components/schemas/SeoReport"
+          type: object
         seoRecommendations:
           type: array
           items:
@@ -66,9 +126,46 @@ components:
         timestamp:
           type: string
           format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SeoRecommendation:
+      type: object
+      required:
+        - clerkUserId
+        - domain
+        - seoReport
+        - recommendation
+      properties:
+        clerkUserId:
+          type: string
+        domain:
+          type: string
+        seoReport:
+          type: string
+        recommendation:
+          type: string
+        action:
+          type: string
+          default: Analyzed
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     User:
       type: object
+      required:
+        - clerkUserId
+        - name
+        - username
+        - email
       properties:
         clerkUserId:
           type: string
@@ -78,17 +175,16 @@ components:
           type: string
         email:
           type: string
-          format: email
         phoneNumber:
           type: string
         image:
           type: string
-          format: uri
         isVerified:
           type: boolean
         membership:
           type: string
           enum: [premium, freemium]
+          default: freemium
         stripe:
           type: object
           properties:
@@ -103,14 +199,6 @@ components:
               enum: [basic, pro, enterprise]
         loginCount:
           type: number
-        websites:
-          type: array
-          items:
-            $ref: "#/components/schemas/Website"
-        websiteHistory:
-          type: array
-          items:
-            $ref: "#/components/schemas/WebsiteHistory"
         weeklyWebsiteLimit:
           type: number
         lastResetDate:
@@ -122,3 +210,31 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    WebsiteVector:
+      type: object
+      required:
+        - websiteUrl
+        - embeddings
+        - textData
+        - metadata
+      properties:
+        websiteUrl:
+          type: string
+        embeddings:
+          type: array
+          items:
+            type: number
+        textData:
+          type: string
+        metadata:
+          type: object
+          properties:
+            userId:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            lastUpdated:
+              type: string
+              format: date-time
