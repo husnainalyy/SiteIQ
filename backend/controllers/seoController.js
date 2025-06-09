@@ -4,17 +4,13 @@ import axios from "axios";
 import dotenv from "dotenv";
 import User from "../models/User.js";
 import Website from "../models/website.js";
-import Website from "../models/website.js";
 
-dotenv.config();
 dotenv.config();
 
 const publicKey = process.env.SEO_API_PUBLIC_KEY;
 const privateKey = process.env.SEO_API_SECRET_KEY;
-const privateKey = process.env.SEO_API_SECRET_KEY;
 const salt = process.env.SEO_SALT;
 
-// Hash generation utility
 // Hash generation utility
 function generateAuthoritasHash({ publicKey, privateKey, salt }) {
   const ts = Math.floor(Date.now() / 1000);
@@ -22,14 +18,8 @@ function generateAuthoritasHash({ publicKey, privateKey, salt }) {
   const hmac = crypto.createHmac("sha256", privateKey);
   const hash = hmac.update(stringToHash).digest("hex");
   return { ts, hash };
-  const ts = Math.floor(Date.now() / 1000);
-  const stringToHash = ts + publicKey + salt;
-  const hmac = crypto.createHmac("sha256", privateKey);
-  const hash = hmac.update(stringToHash).digest("hex");
-  return { ts, hash };
 }
 
-// Scoring function remains unchanged
 // Scoring function remains unchanged
 function scoreSeoResponse(rawResponse, keyword, domain) {
     const scores = {
@@ -174,7 +164,6 @@ const generateAndScoreReport = async (req, res) => {
     }
 
     const jid = jobResponse.data.jid;
-    const jid = jobResponse.data.jid;
 
     // Step 2: Poll until job is ready
     const pollingIntervals = [30_000, 20_000, 15_000, 10_000];
@@ -213,26 +202,7 @@ const generateAndScoreReport = async (req, res) => {
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
       }
     }
-        if (pollResponse.data.ready) {
-          jobReady = true;
-          rawResponse = pollResponse.data;
-          break;
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, pollInterval));
-        }
-      } catch (pollError) {
-        console.error(`Polling error for JID ${jid}:`, pollError.message);
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
-      }
-    }
 
-    if (!jobReady || !rawResponse) {
-      return res.status(504).json({
-        error: "Authoritas job did not complete in time",
-        jid,
-        status: "pending",
-      });
-    }
     if (!jobReady || !rawResponse) {
       return res.status(504).json({
         error: "Authoritas job did not complete in time",
@@ -294,10 +264,8 @@ const generateAndScoreReport = async (req, res) => {
 };
 
 // Delete Report/Phrase
-// Delete Report/Phrase
 const deleteReport = async (req, res) => {
   const { jid } = req.params;
-  const clerkUserId = req.auth.userId;
   const clerkUserId = req.auth.userId;
 
   if (!jid) {
@@ -305,10 +273,6 @@ const deleteReport = async (req, res) => {
   }
 
   try {
-    const report = await SeoReport.findOne({
-      "phraseResults.jid": jid,
-      clerkUserId,
-    });
     const report = await SeoReport.findOne({
       "phraseResults.jid": jid,
       clerkUserId,
@@ -327,9 +291,6 @@ const deleteReport = async (req, res) => {
       return res.status(200).json({
         message: "Report deleted completely as it had only one phrase",
       });
-      return res.status(200).json({
-        message: "Report deleted completely as it had only one phrase",
-      });
     }
 
     await report.save();
@@ -343,18 +304,12 @@ const deleteReport = async (req, res) => {
       error: "Failed to delete report or phrase",
       details: error.message,
     });
-    res.status(500).json({
-      error: "Failed to delete report or phrase",
-      details: error.message,
-    });
   }
 };
 
 // Return Report
-// Return Report
 const returnReport = async (req, res) => {
   const { jid } = req.params;
-  const clerkUserId = req.auth.userId;
   const clerkUserId = req.auth.userId;
 
   if (!jid) {
@@ -366,15 +321,10 @@ const returnReport = async (req, res) => {
       "phraseResults.jid": jid,
       clerkUserId,
     }).populate("website");
-    const report = await SeoReport.findOne({
-      "phraseResults.jid": jid,
-      clerkUserId,
-    }).populate("website");
 
     if (!report) {
       return res
         .status(404)
-        .json({ error: "No report found containing this jid", jid });
         .json({ error: "No report found containing this jid", jid });
     }
 
@@ -392,10 +342,6 @@ const returnReport = async (req, res) => {
         id: report.website._id,
         domain: report.website.domain,
       },
-      website: {
-        id: report.website._id,
-        domain: report.website.domain,
-      },
       scanDate: report.scanDate,
       phraseResult: phraseEntry,
     });
@@ -407,5 +353,4 @@ const returnReport = async (req, res) => {
   }
 };
 
-export { generateAndScoreReport, deleteReport, returnReport };
 export { generateAndScoreReport, deleteReport, returnReport };
