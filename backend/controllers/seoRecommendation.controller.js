@@ -1,13 +1,15 @@
 import axios from "axios";
 import SeoReport from "../models/seoModel.js";
 import SeoRecommendation from "../models/seoRecommendation.js";
+import Website from "../models/website.js"; //new
+
 
 // ✅ CREATE
 const generateSEORecommendations = async (req, res) => {
   try {
     console.log("✅ Step 1: Extracting user ID from auth...");
-    const clerkUserId = req.auth.userId;
-    console.log(clerkUserId);
+    const clerkuserId = req.auth.userId;
+    console.log(clerkuserId);
 
     if (!req.auth || !req.auth.userId) {
       console.warn("❌ Missing auth context.");
@@ -22,16 +24,33 @@ const generateSEORecommendations = async (req, res) => {
       return res.status(400).json({ error: "Missing required field: domain." });
     }
 
-    console.log("✅ Step 3: Searching for SEO report in DB...");
-    const seoReportDoc = await SeoReport.findOne({ clerkUserId, domain });
-    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
+    console.log("✅ Step 3: Searching for SEO report in Website collection...");
 
-    if (!seoReportDoc || !seoReportDoc.phraseResults || seoReportDoc.phraseResults.length === 0) {
-      console.warn("❌ SEO report not found or empty.");
+    // Step 1: Find the Website and populate the seoReport field
+    const websiteDoc = await Website.findOne({ clerkuserId, domain }).populate('seoReport');
+    
+    console.log("websiteDoc:", JSON.stringify(websiteDoc, null, 2));
+    
+    // Step 2: Validate and extract seoReport
+    if (!websiteDoc || !websiteDoc.seoReport || websiteDoc.seoReport.length === 0) {
+      console.warn("❌ Website not found or no SEO reports attached.");
       return res.status(404).json({
-        error: "SEO report not found or contains no phrase results.",
+        error: "Website not found or contains no SEO reports.",
       });
     }
+    
+    // You can now access the SEO report(s)
+    const seoReportDoc = websiteDoc.seoReport[0]; // Or use logic to pick one (latest, first, etc.)
+    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
+    
+    // Optional: Check if phraseResults exists
+    if (!seoReportDoc.phraseResults || seoReportDoc.phraseResults.length === 0) {
+      console.warn("❌ SEO report found but no phrase results.");
+      return res.status(404).json({
+        error: "SEO report contains no phrase results.",
+      });
+    }
+    
 
     console.log("✅ Step 4: Validating Novita API key...");
     const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
@@ -41,8 +60,12 @@ const generateSEORecommendations = async (req, res) => {
     }
 
     console.log("✅ Step 5: Extracting and trimming scores array...");
-    const scoresArray = seoReportDoc.phraseResults.map(r => r.scores).slice(0, 10); // limit to top 10
-
+    const scoresArray = seoReportDoc.phraseResults
+    ?.map(r => r.scores)
+    .slice(0, 10);
+  
+  console.log("✅ scoresArray:", scoresArray);
+  
     console.log("✅ Step 6: Constructing prompt...");
     const prompt = `
     You are provided with an SEO scoring report containing detailed metrics representing the health and performance of a website’s SEO. The scores object includes the following dimensions:
@@ -111,7 +134,7 @@ const generateSEORecommendations = async (req, res) => {
     
     Here is the SEO scoring data you must analyze:
     
-    ${JSON.stringify(scores, null, 2)}
+    ${JSON.stringify(scoresArray, null, 2)}
     `;
     
     console.log("✅ Step 7: Sending request to Novita AI...");
@@ -140,18 +163,34 @@ const generateSEORecommendations = async (req, res) => {
     const seoRecommendationText = response.data.choices[0].message.content.trim();
 
     console.log("✅ Step 9: Saving recommendation to database...");
-    const newRecommendation = new SeoRecommendation({
-      clerkUserId,
-      domain,
-      seoReport: seoReportDoc._id,
-      recommendations: {
-        seo: seoRecommendationText,
-        lighthouse: "" // Leave empty or null for now if you're only generating SEO
-      },
-      action: "Analyzed",
-    });
+
+// Step 1: Create and save recommendation
+const newRecommendation = new SeoRecommendation({
+  clerkUserId: clerkuserId,  // assuming this variable exists and matches the user ID
+  website: websiteDoc._id,   // make sure you have the websiteDoc from DB
+  seoReport: seoReportDoc._id,  // must be unique per schema
+  recommendations: {
+    seo: seoRecommendationText,
+    lighthouse: "", // Optional placeholder
+  },
+  action: "Analyzed", // default is "Analyzed" but explicitly setting here
+});
+
+await newRecommendation.save();
+
     
-    await newRecommendation.save();
+    await newRecommendation.save(); // Save to DB
+    console.log("✅ Recommendation saved:", newRecommendation._id);
+    
+    // Step 2: Push the recommendation _id to Website.seoRecommendation array
+    await Website.findOneAndUpdate(
+      { clerkuserId, domain },
+      { $push: { seoRecommendation: newRecommendation._id } },
+      { new: true } // Return the updated document
+    );
+    
+    console.log("✅ Recommendation reference added to Website object.");
+    
     
     console.log("✅ Step 10: Successfully saved and responding to client.");
     return res.status(200).json({

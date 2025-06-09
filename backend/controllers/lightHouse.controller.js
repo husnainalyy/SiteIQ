@@ -1,5 +1,6 @@
 import SeoReport from '../models/seoModel.js';
 import Website from '../models/website.js'; // Assuming you have this
+import Website from '../models/website.js'; // Assuming you have this
 import lighthouseScrapper from '../services/light_house_scrapper.js';
 import lighthouseService from '../services/light_house_services.js';
 
@@ -35,6 +36,7 @@ const analyzeWebsite = async (req, res) => {
     const newReport = new SeoReport({
       clerkUserId,
       website: website._id,
+      website: website._id,
       phraseResults: [],
       lighthouse: {
         logs: ["🔄 Analysis initialized..."],
@@ -65,6 +67,7 @@ const analyzeWebsite = async (req, res) => {
 };
 
 // 🔧 Background Processing Logic
+// 🔧 Background Processing Logic
 const processAnalysis = async (reportId, domain) => {
   try {
     console.log("🔍 Running Lighthouse and SEO Scraper...");
@@ -73,6 +76,7 @@ const processAnalysis = async (reportId, domain) => {
       runLighthouse(domain),
     ]);
 
+    console.log("✅ Updating SEO report with results...");
     console.log("✅ Updating SEO report with results...");
     await SeoReport.findByIdAndUpdate(reportId, {
       $set: {
@@ -105,6 +109,7 @@ const getReport = async (req, res) => {
   try {
     const { id } = req.params;
     const report = await SeoReport.findById(id).populate("website");
+    const report = await SeoReport.findById(id).populate("website");
 
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
@@ -118,12 +123,17 @@ const getReport = async (req, res) => {
 };
 
 // 📄 READ ALL for current user
+// 📄 READ ALL for current user
 const getAllReports = async (req, res) => {
   try {
     const clerkUserId = req.auth?.userId;
     if (!clerkUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    const reports = await SeoReport.find({ clerkUserId })
+      .populate("website")
+      .sort({ createdAt: -1 });
 
     const reports = await SeoReport.find({ clerkUserId })
       .populate("website")
@@ -136,6 +146,7 @@ const getAllReports = async (req, res) => {
   }
 };
 
+// 📝 UPDATE
 // 📝 UPDATE
 const updateReport = async (req, res) => {
   try {
@@ -170,6 +181,11 @@ const deleteReport = async (req, res) => {
       $pull: { seoReport: deleted._id }
     });
 
+    // Remove reference from website
+    await Website.findByIdAndUpdate(deleted.website, {
+      $pull: { seoReport: deleted._id }
+    });
+
     return res.status(200).json({ message: 'Report deleted successfully' });
   } catch (error) {
     console.error("❌ Error deleting report:", error.message || error);
@@ -178,6 +194,11 @@ const deleteReport = async (req, res) => {
 };
 
 export {
+  analyzeWebsite,
+  getReport,
+  getAllReports,
+  updateReport,
+  deleteReport
   analyzeWebsite,
   getReport,
   getAllReports,
