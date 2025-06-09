@@ -22,34 +22,115 @@ function generateAuthoritasHash({ publicKey, privateKey, salt }) {
 
 // Scoring function remains unchanged
 function scoreSeoResponse(rawResponse, keyword, domain) {
-  // same implementation as you provided
-  // ...
+    const scores = {
+        rankingPosition: 0,
+        keywordRelevance: 0,
+        richSnippets: 0,
+        urlStructure: 0,
+        visibility: 0,
+        competitorAnalysis: 0,
+        paginationStrength: 0,
+        total: 0
+    };
+
+    const responseData = rawResponse?.response || {};
+    const results = responseData.results || {};
+    const summary = responseData.summary || {};
+
+    const organicEntries = Object.entries(results.organic || {});
+    
+    const universalEntries = Object.entries(results.universal || {});
+
+    const top10 = organicEntries
+        .map(([positionStr, result]) => ({
+            position: parseInt(positionStr),
+            ...result
+        }))
+        .filter(r => r.position <= 10);
+
+    const lowerKeyword = keyword.toLowerCase();
+
+    // 1. Ranking Position (30 pts max)
+    const rank = organicEntries.find(([_, r]) => r.url?.includes(domain));
+    if (rank) {
+        const position = parseInt(rank[0]);
+        if (position === 1) scores.rankingPosition = 30;
+        else if (position <= 3) scores.rankingPosition = 27;
+        else if (position <= 10) scores.rankingPosition = 25;
+        else if (position <= 15) scores.rankingPosition = 20;
+        else if (position <= 25) scores.rankingPosition = 15;
+        else if (position <= 35) scores.rankingPosition = 10;
+        else scores.rankingPosition = 5;
+    }
+
+    // 2. Keyword Relevance (20 pts max)
+    let relevanceScore = 0;
+    top10.forEach(result => {
+        if (result.title?.toLowerCase().includes(lowerKeyword)) relevanceScore += 8;
+        if (result.description?.toLowerCase().includes(lowerKeyword)) relevanceScore += 8;
+        if (result.url?.toLowerCase().includes(lowerKeyword)) relevanceScore += 4;
+    });
+    scores.keywordRelevance = Math.min(relevanceScore, 20);
+
+    // 3. Rich Snippets (10 pts max)
+    let richScore = 0;
+    universalEntries.forEach(([_, result]) => {
+        if (Array.isArray(result.rich_snippets) && result.rich_snippets.length > 0) {
+            richScore += 5;
+        }
+    });
+    scores.richSnippets = Math.min(richScore, 10);
+
+    // 4. URL Structure (10 pts max)
+    let cleanUrlScore = 0;
+    top10.forEach(result => {
+        try {
+            const pathname = new URL(result.url).pathname;
+            if (!pathname.includes("?") && !pathname.includes("_")) {
+                cleanUrlScore += 2;
+            }
+        } catch { }
+    });
+    scores.urlStructure = Math.min(cleanUrlScore, 10);
+
+    // 5. Visibility (10 pts max)
+    let visibilityScore = 0;
+    top10.forEach(result => {
+        if (result.above_the_fold) visibilityScore += 3;
+    });
+    scores.visibility = Math.min(visibilityScore, 10);
+
+    // 6. Competitor Analysis (10 pts max)
+    try {
+        const top10Hosts = top10.map(r => new URL(r.url).hostname);
+        if (top10Hosts.includes(domain)) {
+            scores.competitorAnalysis = 10;
+        }
+    } catch { }
+
+    // 7. Pagination Strength (10 pts max)
+    const page1Organic = summary.pages?.["1"]?.organic || 0;
+    scores.paginationStrength = Math.min(page1Organic, 10); // 1pt per result on page 1
+
+    // Total Score
+    scores.total = Object.values(scores).reduce((sum, val) => sum + val, 0);
+
+    return scores;
 }
 
 // Generate & Score Report
 const generateAndScoreReport = async (req, res) => {
-  const { phrase, domain } = req.body;
-  const clerkUserId = req.auth.userId;
-  console.log(clerkUserId);
+  const { phrase, website } = req.body;
+  const clerkUserId = req.auth?.userId;
 
-  if (!phrase || !domain || !clerkUserId) {
+  if (!phrase || !website || !website._id || !website.domain || !clerkUserId) {
     return res.status(400).json({
-      error: "Missing required fields (phrase, domain, clerkUserId)",
+      error: "Missing required fields (phrase, website object with _id and domain, clerkUserId)",
     });
   }
 
   try {
-    // Step 1: Ensure Website exists
-    let website = await Website.findOne({ domain });
-
-    if (!website) {
-      website = await Website.create({
-        clerkuserId: clerkUserId,
-        domain: domain,
-      });
-    }
-
-    // Step 2: Initiate Authoritas job
+    // Step 1: Initiate Authoritas job
     const { ts, hash } = generateAuthoritasHash({
       publicKey,
       privateKey,
@@ -75,10 +156,7 @@ const generateAndScoreReport = async (req, res) => {
         }
       );
     } catch (apiError) {
-      console.error(
-        "Error initiating Authoritas job:",
-        apiError.response?.data || apiError.message
-      );
+      console.error("Error initiating Authoritas job:", apiError.response?.data || apiError.message);
       return res.status(500).json({
         error: "Failed to initiate Authoritas job",
         details: apiError.response?.data || apiError.message,
@@ -87,7 +165,7 @@ const generateAndScoreReport = async (req, res) => {
 
     const jid = jobResponse.data.jid;
 
-    // Step 3: Polling
+    // Step 2: Poll until job is ready
     const pollingIntervals = [30_000, 20_000, 15_000, 10_000];
     const maxAttempts = 20;
     let jobReady = false;
@@ -95,10 +173,7 @@ const generateAndScoreReport = async (req, res) => {
     let rawResponse = null;
 
     while (!jobReady && currentAttempts < maxAttempts) {
-      const pollInterval =
-        pollingIntervals[
-          Math.min(currentAttempts, pollingIntervals.length - 1)
-        ];
+      const pollInterval = pollingIntervals[Math.min(currentAttempts, pollingIntervals.length - 1)];
       currentAttempts++;
 
       try {
@@ -107,15 +182,13 @@ const generateAndScoreReport = async (req, res) => {
           privateKey,
           salt,
         });
-        const pollResponse = await axios.get(
-          `https://v3.api.analyticsseo.com/serps/${jid}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `KeyAuth publicKey=${publicKey} hash=${pollHash} ts=${pollTs}`,
-            },
-          }
-        );
+
+        const pollResponse = await axios.get(`https://v3.api.analyticsseo.com/serps/${jid}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `KeyAuth publicKey=${publicKey} hash=${pollHash} ts=${pollTs}`,
+          },
+        });
 
         if (pollResponse.data.ready) {
           jobReady = true;
@@ -138,67 +211,53 @@ const generateAndScoreReport = async (req, res) => {
       });
     }
 
-    // Step 4: Scoring
-    const scores = scoreSeoResponse(rawResponse, phrase, domain);
+    // Step 3: Score results
+    const scores = scoreSeoResponse(rawResponse, phrase, website.domain);
 
-    // Step 5: Save or update SeoReport
+    // Step 4: Update existing SeoReport (DO NOT CREATE NEW)
     let report = await SeoReport.findOne({ clerkUserId, website: website._id });
-    let message;
 
     if (!report) {
-      report = await SeoReport.create({
-        clerkUserId,
-        website: website._id,
-        scanDate: new Date(),
-        phraseResults: [
-          {
-            phrase,
-            jid,
-            rawResponse,
-            scores,
-            updatedAt: new Date(),
-          },
-        ],
+      return res.status(404).json({
+        error: "SeoReport not found for this website and user.",
       });
-
-      // Add report reference to Website if not already present
-      if (!website.seoReport.includes(report._id)) {
-        website.seoReport.push(report._id);
-        await website.save();
-      }
-
-      message = "New SEO report created for website";
-    } else {
-      const existing = report.phraseResults.find((p) => p.phrase === phrase);
-      if (existing) {
-        existing.jid = jid;
-        existing.rawResponse = rawResponse;
-        existing.scores = scores;
-        existing.updatedAt = new Date();
-        message = "Existing phrase updated with new scores";
-      } else {
-        report.phraseResults.push({
-          phrase,
-          jid,
-          rawResponse,
-          scores,
-          updatedAt: new Date(),
-        });
-        message = "Phrase added to existing report";
-      }
-      await report.save();
     }
+
+    let phraseResult = report.phraseResults.find((p) => p.phrase === phrase);
+    let message;
+
+    if (phraseResult) {
+      // Update existing phrase result
+      phraseResult.jid = jid;
+      phraseResult.rawResponse = rawResponse;
+      phraseResult.scores = scores;
+      phraseResult.updatedAt = new Date();
+      message = "Existing phrase updated with new scores";
+    } else {
+      // Add new phrase result
+      phraseResult = {
+        phrase,
+        jid,
+        rawResponse,
+        scores,
+        updatedAt: new Date(),
+      };
+      report.phraseResults.push(phraseResult);
+      message = "New phrase added to existing SEO report";
+    }
+
+    await report.save();
 
     return res.status(200).json({
       message,
       jid,
       reportId: report._id,
-      phraseResult: report.phraseResults.find((p) => p.jid === jid),
+      phraseResult,
     });
   } catch (error) {
     console.error("Fatal error in generateAndScoreReport:", error);
     return res.status(500).json({
-      error: "Failed to generate and save SEO report",
+      error: "Failed to generate and update SEO report",
       details: error.message,
     });
   }

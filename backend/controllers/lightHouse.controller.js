@@ -6,7 +6,6 @@ import lighthouseService from '../services/light_house_services.js';
 const { scrapeWebsite } = lighthouseScrapper;
 const { runLighthouse } = lighthouseService;
 
-// ✅ CREATE SEO REPORT + Trigger Analysis
 const analyzeWebsite = async (req, res) => {
   try {
     const clerkUserId = req.auth?.userId;
@@ -14,17 +13,25 @@ const analyzeWebsite = async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { websiteId } = req.body;
-    if (!websiteId) {
-      return res.status(400).json({ error: 'Missing required field: websiteId' });
+    let { domain } = req.body;
+    if (!domain) {
+      return res.status(400).json({ error: 'Missing required field: domain' });
     }
 
-    const website = await Website.findById(websiteId);
+    // Normalize domain (same as your pre-save hook)
+    domain = domain.trim().replace(/^https?:\/\//i, '');
+    const normalizedDomain = `https://${domain}`;
+
+    // 1️⃣ Check if this user already has this website
+    let website = await Website.findOne({ clerkuserId: clerkUserId, domain: normalizedDomain });
+
+    // 2️⃣ If not, create it
     if (!website) {
-      return res.status(404).json({ error: 'Website not found' });
+      website = new Website({ clerkuserId: clerkUserId, domain: normalizedDomain });
+      await website.save();
     }
-    
 
+    // 3️⃣ Create report
     const newReport = new SeoReport({
       clerkUserId,
       website: website._id,
@@ -39,12 +46,13 @@ const analyzeWebsite = async (req, res) => {
 
     await newReport.save();
 
-    // Add reference to website's seoReport array (if applicable)
+    // 4️⃣ Link report to website
     await Website.findByIdAndUpdate(website._id, {
       $push: { seoReport: newReport._id }
     });
 
-    processAnalysis(newReport._id, website.domain); // Still passing domain to scrapers
+    // 5️⃣ Start background processing
+    processAnalysis(newReport._id, normalizedDomain);
 
     return res.status(202).json({
       message: 'Analysis started',
