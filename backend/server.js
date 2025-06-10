@@ -26,6 +26,9 @@ import userChatRoutes from "./routes/userChatRoutes.js";
 
 // Initialize Express
 const app = express();
+app.use(express.json()); // To parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies (e.g. from forms)
+
 const PORT = process.env.PORT || 4500;
 
 // Middleware

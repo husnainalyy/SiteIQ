@@ -22,25 +22,46 @@ components:
         user:
           type: string
           description: Clerk User ID
-        url:
-          type: string
-          example: "https://example.com"
         domain:
           type: string
           example: "example.com"
+
+    SeoScore:
+      type: object
+      properties:
+        rankingPosition:
+          type: number
+        keywordRelevance:
+          type: number
+        richSnippets:
+          type: number
+        urlStructure:
+          type: number
+        visibility:
+          type: number
+        competitorAnalysis:
+          type: number
+        paginationStrength:
+          type: number
+        total:
+          type: number
 
     PhraseResult:
       type: object
       properties:
         jid:
           type: string
-          example: "JID123"
+          example: "JID123456"
         phrase:
           type: string
-        score:
-          type: number
-        data:
+          example: "best running shoes"
+        scores:
+          $ref: '#/components/schemas/SeoScore'
+        rawResponse:
           type: object
+        updatedAt:
+          type: string
+          format: date-time
 
     SeoReport:
       type: object
@@ -62,7 +83,7 @@ components:
 paths:
   /api/seoreports/generate:
     post:
-      summary: Generate and score a new SEO report
+      summary: Generate and score a new SEO report for a given phrase and website
       tags: [SEO Reports]
       requestBody:
         required: true
@@ -72,29 +93,49 @@ paths:
               type: object
               required:
                 - phrase
-                - domain
+                - website
               properties:
                 phrase:
                   type: string
                   example: "buy shoes online"
-                domain:
-                  type: string
-                  example: "example.com"
+                website:
+                  type: object
+                  required:
+                    - _id
+                    - domain
+                  properties:
+                    _id:
+                      type: string
+                      example: "665ce3e2569f28e78653c1e1"
+                    domain:
+                      type: string
+                      example: "example.com"
       responses:
         '200':
           description: Report created or updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SeoReport'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  jid:
+                    type: string
+                  reportId:
+                    type: string
+                  phraseResult:
+                    $ref: '#/components/schemas/PhraseResult'
         '400':
           description: Missing required fields
+        '404':
+          description: SEO report not found for this website and user
         '500':
           description: Internal server error
 
   /api/seoreports/delete/{jid}:
     delete:
-      summary: Delete a phrase result or entire report by job ID
+      summary: Delete a phrase result or entire SEO report by job ID
       tags: [SEO Reports]
       parameters:
         - in: path
@@ -106,6 +147,15 @@ paths:
       responses:
         '200':
           description: Phrase or report deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  jid:
+                    type: string
         '400':
           description: Missing jid
         '404':
@@ -130,10 +180,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SeoReport'
+                type: object
+                properties:
+                  reportId:
+                    type: string
+                  website:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      domain:
+                        type: string
+                  scanDate:
+                    type: string
+                    format: date-time
+                  phraseResult:
+                    $ref: '#/components/schemas/PhraseResult'
         '400':
           description: Missing jid parameter
         '404':
-          description: Report not found
+          description: Report or phrase not found
         '500':
           description: Internal server error

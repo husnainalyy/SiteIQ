@@ -16,7 +16,7 @@ const PhraseResultSchema = new mongoose.Schema({
     paginationStrength: { type: Number, default: 0 },
     total: { type: Number, default: 0 }
   }
-});
+}, { _id: false, timestamps: false });
 
 // Lighthouse report sub-schema
 const LighthouseReportSchema = new mongoose.Schema({
