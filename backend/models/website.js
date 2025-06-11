@@ -25,10 +25,10 @@ const websiteSchema = new mongoose.Schema(
       }
     },
 
-    seoReport: [{
+    seoReport: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SeoReport",
-    }],
+    },
     seoRecommendation: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "SeoRecommendation",

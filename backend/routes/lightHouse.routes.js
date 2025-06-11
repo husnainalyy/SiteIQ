@@ -13,7 +13,6 @@ import {
 const router = express.Router();
 
 // ✅ Apply mock authentication middleware globally
-router.use(mockClerkAuth);
 
 // ✅ CREATE - Start analysis
 router.post('/analyze', analyzeWebsite);

@@ -8,30 +8,31 @@ const { runLighthouse } = lighthouseService;
 
 const analyzeWebsite = async (req, res) => {
   try {
+    console.log("hit the controller");
     const clerkUserId = req.auth?.userId;
+    console.log(clerkUserId);
     if (!clerkUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     let { domain } = req.body;
+    console.log(req.body);
     if (!domain) {
       return res.status(400).json({ error: 'Missing required field: domain' });
     }
 
-    // Normalize domain (same as your pre-save hook)
+    // Normalize domain
     domain = domain.trim().replace(/^https?:\/\//i, '');
     const normalizedDomain = `https://${domain}`;
 
-    // 1️⃣ Check if this user already has this website
+    // Check if website exists
     let website = await Website.findOne({ clerkuserId: clerkUserId, domain: normalizedDomain });
-
-    // 2️⃣ If not, create it
     if (!website) {
       website = new Website({ clerkuserId: clerkUserId, domain: normalizedDomain });
       await website.save();
     }
 
-    // 3️⃣ Create report
+    // Create initial report
     const newReport = new SeoReport({
       clerkUserId,
       website: website._id,
@@ -46,18 +47,57 @@ const analyzeWebsite = async (req, res) => {
 
     await newReport.save();
 
-    // 4️⃣ Link report to website
+    // Link report to website
     await Website.findByIdAndUpdate(website._id, {
       $push: { seoReport: newReport._id }
     });
 
-    // 5️⃣ Start background processing
-    processAnalysis(newReport._id, normalizedDomain);
+    // Run SEO and Lighthouse analysis synchronously
+    console.log("🔍 Running Lighthouse and SEO Scraper...");
+    let seoData, lighthouseResult;
 
-    return res.status(202).json({
-      message: 'Analysis started',
-      reportId: newReport._id,
+    try {
+      [seoData, lighthouseResult] = await Promise.all([
+        scrapeWebsite(normalizedDomain),
+        runLighthouse(normalizedDomain),
+      ]);
+    } catch (err) {
+      console.error("❌ Background analysis failed:", err.message || err);
+      const failReport = await SeoReport.findByIdAndUpdate(newReport._id, {
+        $set: {
+          'lighthouse.logs': ["❌ Analysis failed."],
+          'lighthouse.error': {
+            message: err.message,
+            stack: err.stack,
+            name: err.name || "UnknownError"
+          }
+        }
+      }, { new: true });
+      return res.status(500).json({ error: 'Analysis failed', lighthouse: failReport.lighthouse });
+    }
+
+    console.log("✅ Updating SEO report with results...");
+    const finalReport = await SeoReport.findByIdAndUpdate(
+      newReport._id,
+      {
+        $set: {
+          'lighthouse.lighthouseReport': lighthouseResult,
+          'lighthouse.logs': ["✅ Lighthouse analysis completed."],
+          'lighthouse.error': null,
+          phraseResults: seoData
+        },
+        $currentDate: {
+          'lighthouse.createdAt': true
+        }
+      },
+      { new: true }
+    ).populate("website");
+
+    return res.status(200).json({
+      message: 'Analysis completed successfully',
+      lighthouse: finalReport.lighthouse,
     });
+
   } catch (error) {
     console.error('❌ Error initiating analysis:', error.message || error);
     return res.status(500).json({ error: 'Internal Server Error' });

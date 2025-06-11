@@ -125,22 +125,107 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
 // Generate & Score Report
 // Generate & Score Report - Production Ready
 const generateAndScoreReport = async (req, res) => {
-  const { phrase, website } = req.body;
+  const { phrase, websiteId } = req.body;
   const clerkUserId = req.auth?.userId;
 
-  if (!phrase || !website || !website._id || !website.domain || !clerkUserId) {
+  if (!phrase || !websiteId || !clerkUserId) {
     return res.status(400).json({
-      error:
-        "Missing required fields (phrase, website object with _id and domain, clerkUserId)",
+      error: "Missing required fields (phrase, websiteId, clerkUserId)",
     });
   }
 
   try {
-    // [Previous API calls and polling code remains the same...]
-    // ... (keeping the existing code for brevity)
+    // Step 1: Lookup website to get domain
+    const website = await Website.findById(websiteId);
+    if (!website) {
+      return res.status(404).json({ error: "Website not found." });
+    }
 
-    // Step 4: Update existing SeoReport
-    let report = await SeoReport.findOne({ clerkUserId, website: website._id });
+    // Step 2: Initiate Authoritas job
+    const { ts, hash } = generateAuthoritasHash({
+      publicKey,
+      privateKey,
+      salt,
+    });
+
+    let jobResponse;
+    try {
+      jobResponse = await axios.post(
+        "https://v3.api.analyticsseo.com/serps/",
+        {
+          search_engine: "google",
+          region: "global",
+          language: "en",
+          max_results: 30,
+          phrase,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `KeyAuth publicKey=${publicKey} hash=${hash} ts=${ts}`,
+          },
+        }
+      );
+    } catch (apiError) {
+      console.error("Error initiating Authoritas job:", apiError.response?.data || apiError.message);
+      return res.status(500).json({
+        error: "Failed to initiate Authoritas job",
+        details: apiError.response?.data || apiError.message,
+      });
+    }
+
+    const jid = jobResponse.data.jid;
+
+    // Step 3: Poll for job completion
+    const pollingIntervals = [30_000, 20_000, 15_000, 10_000];
+    const maxAttempts = 20;
+    let jobReady = false;
+    let currentAttempts = 0;
+    let rawResponse = null;
+
+    while (!jobReady && currentAttempts < maxAttempts) {
+      const pollInterval = pollingIntervals[Math.min(currentAttempts, pollingIntervals.length - 1)];
+      currentAttempts++;
+
+      try {
+        const { ts: pollTs, hash: pollHash } = generateAuthoritasHash({
+          publicKey,
+          privateKey,
+          salt,
+        });
+
+        const pollResponse = await axios.get(`https://v3.api.analyticsseo.com/serps/${jid}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `KeyAuth publicKey=${publicKey} hash=${pollHash} ts=${pollTs}`,
+          },
+        });
+
+        if (pollResponse.data.ready) {
+          jobReady = true;
+          rawResponse = pollResponse.data;
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        }
+      } catch (pollError) {
+        console.error(`Polling error for JID ${jid}:`, pollError.message);
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      }
+    }
+
+    if (!jobReady || !rawResponse) {
+      return res.status(504).json({
+        error: "Authoritas job did not complete in time",
+        jid,
+        status: "pending",
+      });
+    }
+
+    // Step 4: Score results
+    const scores = scoreSeoResponse(rawResponse, phrase, website.domain);
+
+    // Step 5: Update SeoReport
+    let report = await SeoReport.findOne({ clerkUserId, website: websiteId });
 
     if (!report) {
       return res.status(404).json({
@@ -148,61 +233,45 @@ const generateAndScoreReport = async (req, res) => {
       });
     }
 
-    // Data integrity check - remove any corrupted entries
+    // Clean corrupted phraseResults
     const originalLength = report.phraseResults.length;
-    report.phraseResults = report.phraseResults.filter(pr => 
-      pr && pr.phrase && pr.jid && 
-      typeof pr.phrase === 'string' && 
+    report.phraseResults = report.phraseResults.filter(pr =>
+      pr && pr.phrase && pr.jid &&
+      typeof pr.phrase === 'string' &&
       typeof pr.jid === 'string'
     );
-    
-    // Log if cleanup was needed (helps with monitoring)
+
     if (originalLength !== report.phraseResults.length) {
       console.warn(`Cleaned up ${originalLength - report.phraseResults.length} corrupted phrase results for report ${report._id}`);
     }
 
-    let phraseResult = report.phraseResults.find((p) => p.phrase === phrase);
+    // Update or insert phrase result
+    let phraseResult = report.phraseResults.find(p => p.phrase === phrase);
     let message;
     let updatedPhraseResult;
 
     if (phraseResult) {
-      // Update existing phrase result
       phraseResult.jid = jid;
       phraseResult.rawResponse = rawResponse;
       phraseResult.scores = scores;
-      
       report.markModified('phraseResults');
       updatedPhraseResult = phraseResult;
       message = "Existing phrase updated with new scores";
     } else {
-      // Add new phrase result
-      const newPhraseResult = {
-        phrase,
-        jid,
-        rawResponse,
-        scores
-      };
-      
+      const newPhraseResult = { phrase, jid, rawResponse, scores };
       report.phraseResults.push(newPhraseResult);
       updatedPhraseResult = newPhraseResult;
       message = "New phrase added to existing report with results and scores";
     }
 
-    try {
-      await report.save();
-      return res.status(200).json({
-        message,
-        jid,
-        reportId: report._id,
-        phraseResult: updatedPhraseResult,
-      });
-    } catch (saveError) {
-      console.error("Error saving report:", saveError);
-      return res.status(500).json({
-        error: "Failed to save SEO report",
-        details: saveError.message,
-      });
-    }
+    await report.save();
+
+    return res.status(200).json({
+      message,
+      jid,
+      reportId: report._id,
+      phraseResult: updatedPhraseResult,
+    });
   } catch (error) {
     console.error("Fatal error in generateAndScoreReport:", error);
     return res.status(500).json({
@@ -211,6 +280,7 @@ const generateAndScoreReport = async (req, res) => {
     });
   }
 };
+
 
 // Delete Report/Phrase
 const deleteReport = async (req, res) => {
@@ -301,5 +371,25 @@ const returnReport = async (req, res) => {
       .json({ error: "Internal server error", details: error.message });
   }
 };
+export const getSeoReports = async (req, res) => {
+  try {
+    const { websiteId } = req.params;
 
-export { generateAndScoreReport, deleteReport, returnReport };
+    const website = await Website.findById(websiteId)
+      .populate("seoReport") // populate the referenced SeoReport documents
+      .exec();
+
+    if (!website) {
+      return res.status(404).json({ error: "Website not found" });
+    }
+
+    return res.status(200).json({
+      seoReport: website.seoReport,
+    });
+  } catch (err) {
+    console.error("Error fetching SEO reports:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+export { generateAndScoreReport, deleteReport, returnReport , getSeoReports};
