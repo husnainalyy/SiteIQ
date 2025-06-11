@@ -371,7 +371,7 @@ const returnReport = async (req, res) => {
       .json({ error: "Internal server error", details: error.message });
   }
 };
-export const getSeoReports = async (req, res) => {
+ const getSeoReports = async (req, res) => {
   try {
     const { websiteId } = req.params;
 
