@@ -2,7 +2,8 @@ export const SEO_REPORT_API = {
   GENERATE: '/seoreports/generate',
   DELETE: (jid) => `/seoreports/delete/${jid}`,
   RETURN: (jid) => `/seoreports/return/${jid}`,
-  GET_WEBSITE: (websiteId) => `/seoreports/websites/${websiteId}`
+  GET_WEBSITE: (websiteId) => `/seoreports/websites/${websiteId}`,
+  DELETE_PHRASE: (websiteId, phrase) => `/seoreports/delete/${websiteId}/${phrase}`
 };
 
 export const LIGHTHOUSE_API = {

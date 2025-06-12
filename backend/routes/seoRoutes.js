@@ -4,7 +4,8 @@ import {
   generateAndScoreReport,
   deleteReport,
   returnReport,
-  getSeoReports
+  getSeoReports,
+  deletePhraseResultByPhrase
 } from '../controllers/seoController.js';
 
 const router = express.Router(); 
@@ -17,4 +18,7 @@ router.delete("/delete/:jid", deleteReport); // params {jid}
 router.get("/return/:jid", returnReport);  // params {jid}
 
 router.get("/websites/:websiteId", getSeoReports);
+
+router.delete("/delete/:websiteId/:phrase",deletePhraseResultByPhrase); // params {websiteId, phrase}
+
 export default router;

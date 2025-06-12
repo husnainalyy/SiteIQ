@@ -74,21 +74,36 @@ export default function Improve() {
   const handleStartChat = () => {
     if (!conversationId || !recommendation) return;
 
+    // Store the current state before switching to chat
     setPreviousState({
       type: 'analysis',
-      recommendation: recommendation
+      recommendation: recommendation,
+      chatId: selectedChatId,
+      chatMessages: chatMessages
     });
 
     setShowChat(true);
     setSelectedChatId(conversationId);
-    const initialMessages = [
-      { 
-        role: "assistant", 
-        content: "I've analyzed your website and here are my recommendations. Feel free to ask me any questions about them!" 
-      }
-    ];
     
-    setChatMessages(initialMessages);
+    // If we have previous chat messages, restore them
+    if (chatMessages.length > 0) {
+      // Keep existing messages
+      setChatMessages(chatMessages);
+    } else {
+      // Initialize with new message
+      const initialMessages = [
+        { 
+          role: "assistant", 
+          content: `I've analyzed your website and have some recommendations. Here's a summary of what I found:
+
+${recommendation.meta.description}
+
+You can ask me any questions about the analysis or specific recommendations.`
+        }
+      ];
+      setChatMessages(initialMessages);
+    }
+    
     setCameFromAnalysis(true);
   };
 
@@ -179,19 +194,7 @@ export default function Improve() {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="relative">
-                    <div className="absolute -top-12 left-0">
-                      {cameFromAnalysis && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleBack(showChat, recommendation)}
-                          className="cursor-pointer"
-                        >
-                          <ChevronLeft className="h-4 w-4 mr-2" />
-                          Back to Analysis
-                        </Button>
-                      )}
-                    </div>
+                    
                   <ChatInterface
                     chatMessages={chatMessages}
                     chatInput={chatInput}

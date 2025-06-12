@@ -35,7 +35,6 @@ import { createDropdownMenuScope } from "@radix-ui/react-dropdown-menu";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-
 console.log("seoreportapi", SEO_REPORT_API);
 console.log("ANALYZE URL:", SEO_REPORT_API.GET_WEBSITE);
 
@@ -262,7 +261,7 @@ const PhraseResultCard = ({
 };
 
 export default function AdvancedSeoReports({}) {
-  const { websiteId } = useParams()
+  const { websiteId } = useParams();
   const [seoReport, setSeoReport] = useState(null);
   const [phraseResults, setPhraseResults] = useState([]);
   const [newPhrase, setNewPhrase] = useState("");
@@ -273,26 +272,19 @@ export default function AdvancedSeoReports({}) {
 
   // Load existing phrase results on component mount
   useEffect(() => {
-    console.log("Entered the useeffect ")
-    console.log("this is the value of websiteId")
-    console.log(websiteId)
+    console.log(websiteId);
     if (websiteId) {
       loadPhraseResults();
     }
   }, [websiteId]);
 
-  // TODO: Implement this API endpoint - GET /api/seoreports/:id/phrases
   const loadPhraseResults = async () => {
     try {
       setLoading(true);
-      console.log("making the api call");
       const response = await axiosInstance.get(
         `${SEO_REPORT_API.GET_WEBSITE(websiteId)}`
       );
-      console.log("made it pas the api call")
-      console.log(response.data);
-      const seoReport= response.data.seoReport;
-      console.log(seoReport);
+      const seoReport = response.data.seoReport;
       const phraseResult = seoReport.phraseResults;
       setPhraseResults(phraseResult || []);
     } catch (err) {
@@ -302,7 +294,6 @@ export default function AdvancedSeoReports({}) {
     }
   };
 
-  // TODO: Implement this API endpoint - POST /api/seoreports/:id/phrases/analyze
   const analyzeNewPhrase = async () => {
     if (!newPhrase.trim()) {
       setError("Please enter a phrase to analyze");
@@ -310,47 +301,56 @@ export default function AdvancedSeoReports({}) {
     }
 
     try {
-      console.log("setting new phrase")
       setAnalyzingPhrase(newPhrase);
       setError("");
-      console.log("new phrase set now making api call ")
-      const response = await axiosInstance.post(
-        `${SEO_REPORT_API.GENERATE}`,
-        {
-          phrase: newPhrase.trim(),
-          websiteId: websiteId,
-        }
-      );
 
-
-      // Add the new result to the list
-      setPhraseResults((prev) => [...prev, response.data]);
-      setNewPhrase("");
+      const response = await axiosInstance.post(`${SEO_REPORT_API.GENERATE}`, {
+        phrase: newPhrase.trim(),
+        websiteId: websiteId,
+      });
+      // Extract the phraseResult from the response
+      const newPhraseResult = response.data.phraseResult;
+      if (newPhraseResult) {
+        // Add the phraseResult (not the entire response) to the list
+        setPhraseResults((prev) => [...prev, newPhraseResult]);
+        setNewPhrase("");
+      } else {
+        console.error("❌ No phraseResult found in response");
+        setError("Invalid response format from server");
+      }
     } catch (err) {
+      console.error("❌ Error analyzing new phrase:", err);
+      console.error("📋 Error response:", err.response?.data);
       setError(err.response?.data?.message || "Failed to analyze phrase");
     } finally {
       setAnalyzingPhrase("");
     }
   };
 
-  // TODO: Implement this API endpoint - PUT /api/seoreports/:id/phrases/:phrase/reanalyze
   const reanalyzePhrase = async (phrase) => {
     try {
       setReanalyzingPhrase(phrase);
       setError("");
 
-      const response = await axiosInstance.put(
-        `${SEO_REPORT_API.RETURN(seoReportId)}/phrases/${encodeURIComponent(
-          phrase
-        )}/reanalyze`
-      );
+      const response = await axiosInstance.post(`${SEO_REPORT_API.GENERATE}`, {
+        phrase,
+        websiteId,
+      });
 
-      // Update the specific phrase result
-      setPhraseResults((prev) =>
-        prev.map((result) =>
-          result.phrase === phrase ? response.data : result
-        )
-      );
+      const updatedPhraseResult = response.data?.phraseResult;
+
+      setPhraseResults((prev) => {
+        const exists = prev.some((result) => result.phrase === phrase);
+        if (exists) {
+          // Replace the existing phrase result
+          return prev.map((result) =>
+            result.phrase === phrase ? updatedPhraseResult : result
+          );
+        } else {
+          // Insert new phrase result
+          return [...prev, updatedPhraseResult];
+        }
+      });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to reanalyze phrase");
     } finally {
@@ -358,8 +358,8 @@ export default function AdvancedSeoReports({}) {
     }
   };
 
-  // TODO: Implement this API endpoint - DELETE /api/seoreports/:id/phrases/:phrase
   const deletePhrase = async (phrase) => {
+
     if (
       !confirm(`Are you sure you want to delete the analysis for "${phrase}"?`)
     ) {
@@ -368,9 +368,7 @@ export default function AdvancedSeoReports({}) {
 
     try {
       await axiosInstance.delete(
-        `${SEO_REPORT_API.RETURN(seoReportId)}/phrases/${encodeURIComponent(
-          phrase
-        )}`
+        `${SEO_REPORT_API.DELETE_PHRASE(websiteId, phrase)}`
       );
 
       // Remove from local state
@@ -383,163 +381,173 @@ export default function AdvancedSeoReports({}) {
   };
 
   const calculateOverallScore = () => {
-    if (phraseResults.length === 0) return 0;
-    const totalScore = phraseResults.reduce(
-      (sum, result) => sum + result.scores.total,
-      0
-    );
-    return Math.round(totalScore / phraseResults.length);
+    if (!phraseResults || phraseResults.length === 0) {
+      return 0;
+    }
+
+    const validScores = phraseResults
+      .filter(
+        (result) =>
+          result && result.scores && typeof result.scores.total === "number"
+      )
+      .map((result) => result.scores.total);
+
+    if (validScores.length === 0) {
+      return 0;
+    }
+
+    const totalScore = validScores.reduce((sum, score) => sum + score, 0);
+    return Math.round(totalScore / validScores.length);
   };
 
   return (
-
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white p-6">
-      <Navbar/>
+      <Navbar />
       <section className="relative pt-32 pb-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Advanced SEO Analysis
+            </h1>
+            <p className="text-gray-600">
+              Detailed keyword and phrase performance analysis for{" "}
+              {"your website"}
+            </p>
+          </div>
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Advanced SEO Analysis
-          </h1>
-          <p className="text-gray-600">
-            Detailed keyword and phrase performance analysis for{" "}
-            { "your website"}
-          </p>
-        </div>
+          {/* Overall Score Card */}
+          {phraseResults.length > 0 && (
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle>Overall SEO Performance</CardTitle>
+                <CardDescription>
+                  Average score across all analyzed phrases
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <CircularProgress
+                  value={calculateOverallScore()}
+                  size={120}
+                  label="Overall Score"
+                />
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Overall Score Card */}
-        {phraseResults.length > 0 && (
+          {/* Add New Phrase */}
           <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Overall SEO Performance</CardTitle>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-purple-600" />
+                Analyze New Phrase
+              </CardTitle>
               <CardDescription>
-                Average score across all analyzed phrases
+                Enter a keyword or phrase to get detailed SEO analysis and
+                scoring
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center">
-              <CircularProgress
-                value={calculateOverallScore()}
-                size={120}
-                label="Overall Score"
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Add New Phrase */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-purple-600" />
-              Analyze New Phrase
-            </CardTitle>
-            <CardDescription>
-              Enter a keyword or phrase to get detailed SEO analysis and scoring
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter keyword or phrase (e.g., 'best pizza restaurant')"
-                value={newPhrase}
-                onChange={(e) => setNewPhrase(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && analyzeNewPhrase()}
-                disabled={!!analyzingPhrase}
-              />
-              <Button
-                onClick={analyzeNewPhrase}
-                disabled={!newPhrase.trim() || !!analyzingPhrase}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                {analyzingPhrase ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Analyze
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {analyzingPhrase && (
-              <div className="flex items-center justify-center p-8">
-                <div className="text-center space-y-4">
-                  <CircularProgress
-                    value={0}
-                    size={100}
-                    label="Analyzing..."
-                    isLoading={true}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Analyzing "{analyzingPhrase}" - This may take a few
-                    moments...
-                  </p>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter keyword or phrase (e.g., 'best pizza restaurant')"
+                  value={newPhrase}
+                  onChange={(e) => setNewPhrase(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && analyzeNewPhrase()}
+                  disabled={!!analyzingPhrase}
+                />
+                <Button
+                  onClick={analyzeNewPhrase}
+                  disabled={!newPhrase.trim() || !!analyzingPhrase}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {analyzingPhrase ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Analyze
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Phrase Results */}
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
-              <p className="text-gray-600">Loading phrase results...</p>
-            </div>
-          </div>
-        ) : phraseResults.length > 0 ? (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Phrase Analysis Results
-              </h2>
-              <Badge variant="outline" className="text-sm">
-                {phraseResults.length} phrase
-                {phraseResults.length !== 1 ? "s" : ""} analyzed
-              </Badge>
-            </div>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            {phraseResults.map((phraseResult, index) => (
-              <PhraseResultCard
-                key={`${phraseResult.phrase}-${index}`}
-                phraseResult={phraseResult}
-                onReanalyze={reanalyzePhrase}
-                onDelete={deletePhrase}
-                isReanalyzing={reanalyzingPhrase === phraseResult.phrase}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="text-center p-8">
-              <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Phrases Analyzed Yet
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Start by entering a keyword or phrase above to get detailed SEO
-                insights
-              </p>
+              {analyzingPhrase && (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center space-y-4">
+                    <CircularProgress
+                      value={0}
+                      size={100}
+                      label="Analyzing..."
+                      isLoading={true}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Analyzing "{analyzingPhrase}" - This may take a few
+                      moments...
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          {/* Phrase Results */}
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
+                <p className="text-gray-600">Loading phrase results...</p>
+              </div>
+            </div>
+          ) : phraseResults.length > 0 ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Phrase Analysis Results
+                </h2>
+                <Badge variant="outline" className="text-sm">
+                  {phraseResults.length} phrase
+                  {phraseResults.length !== 1 ? "s" : ""} analyzed
+                </Badge>
+              </div>
+
+              {phraseResults.map((phraseResult, index) => (
+                <PhraseResultCard
+                  key={`${phraseResult.phrase}-${index}`}
+                  phraseResult={phraseResult}
+                  onReanalyze={reanalyzePhrase}
+                  onDelete={deletePhrase}
+                  isReanalyzing={reanalyzingPhrase === phraseResult.phrase}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center p-8">
+                <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Phrases Analyzed Yet
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Start by entering a keyword or phrase above to get detailed
+                  SEO insights
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </section>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

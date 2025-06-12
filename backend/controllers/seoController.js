@@ -201,6 +201,7 @@ const generateAndScoreReport = async (req, res) => {
             Authorization: `KeyAuth publicKey=${publicKey} hash=${pollHash} ts=${pollTs}`,
           },
         });
+        console.log("polling response");
 
         if (pollResponse.data.ready) {
           jobReady = true;
@@ -241,7 +242,7 @@ const generateAndScoreReport = async (req, res) => {
       typeof pr.phrase === 'string' &&
       typeof pr.jid === 'string'
     );
-
+    console.log("saving report");
     if (originalLength !== report.phraseResults.length) {
       console.warn(`Cleaned up ${originalLength - report.phraseResults.length} corrupted phrase results for report ${report._id}`);
     }
@@ -393,4 +394,40 @@ const returnReport = async (req, res) => {
   }
 };
 
-export { generateAndScoreReport, deleteReport, returnReport , getSeoReports};
+// DELETE /seo-reports/:reportId/phrase/:phrase
+
+const deletePhraseResultByPhrase = async (req, res) => {
+  const { websiteId, phrase } = req.params;
+  try {
+    // 1. Find the Website and get its linked SeoReport
+    const website = await Website.findById(websiteId).populate("seoReport");
+
+    if (!website || !website.seoReport) {
+      return res.status(404).json({ message: "Website or associated SEO report not found" });
+    }
+
+    const seoReportId = website.seoReport._id;
+
+    // 2. Pull the phrase result from the seoReport
+    const updatedSeoReport = await SeoReport.findByIdAndUpdate(
+      seoReportId,
+      {
+        $pull: {
+          phraseResults: { phrase: phrase }
+        }
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: `Phrase "${phrase}" deleted successfully.`,
+      updatedReport: updatedSeoReport
+    });
+
+  } catch (error) {
+    console.error("Error deleting phrase:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export { generateAndScoreReport, deleteReport, returnReport , getSeoReports, deletePhraseResultByPhrase};
