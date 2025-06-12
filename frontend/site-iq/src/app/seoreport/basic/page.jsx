@@ -373,7 +373,7 @@ export default function SeoReportPage() {
     return validAudits > 0 ? Math.round((totalScore / validAudits) * 100) : 0;
   };
 
-  if (!website && !seoReport) {
+  if (!websiteId && !seoReport) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white p-6">
         <div className="max-w-4xl mx-auto">
@@ -462,7 +462,7 @@ export default function SeoReportPage() {
               <span className="text-accent">SEO</span> Performance Report
             </h1>
             <p className="text-gray-600">
-              {website?.domain ||
+              {
                 seoReport?.lighthouse?.lighthouseReport?.finalDisplayedUrl ||
                 domain}
             </p>

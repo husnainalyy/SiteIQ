@@ -9,9 +9,8 @@ import {
 
 const router = express.Router(); 
 
-router.use(mockClerkAuth);
 
-router.post("/generate", generateAndScoreReport);   // body {domain, phrase}
+router.post("/generate", generateAndScoreReport);   // body {domain, phrase}awe
 
 router.delete("/delete/:jid", deleteReport); // params {jid} 
 

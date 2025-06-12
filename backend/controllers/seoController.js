@@ -125,6 +125,7 @@ function scoreSeoResponse(rawResponse, keyword, domain) {
 // Generate & Score Report
 // Generate & Score Report - Production Ready
 const generateAndScoreReport = async (req, res) => {
+  console.log("hit the controller");
   const { phrase, websiteId } = req.body;
   const clerkUserId = req.auth?.userId;
 

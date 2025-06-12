@@ -310,16 +310,18 @@ export default function AdvancedSeoReports({}) {
     }
 
     try {
+      console.log("setting new phrase")
       setAnalyzingPhrase(newPhrase);
       setError("");
-
+      console.log("new phrase set now making api call ")
       const response = await axiosInstance.post(
         `${SEO_REPORT_API.GENERATE}`,
         {
           phrase: newPhrase.trim(),
-          websiteId: website?._id,
+          websiteId: websiteId,
         }
       );
+
 
       // Add the new result to the list
       setPhraseResults((prev) => [...prev, response.data]);
