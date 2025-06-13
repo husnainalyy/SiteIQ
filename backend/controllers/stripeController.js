@@ -63,14 +63,22 @@ export const createCheckoutSession = async (req, res) => {
  */
 // Controller for handling Stripe Webhooks
 export const handleWebhook = async (req, res) => {
+<<<<<<< HEAD
   const sig = req.headers['stripe-signature'];
   let event;
+=======
+     const sig = req.headers['stripe-signature'];
+
+  let event;
+
+>>>>>>> 3a22b4418bccc21885a18f16d22ae8b56ddcbaec
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error('Webhook Error:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
+<<<<<<< HEAD
   console.log('🔔 Stripe webhook received:', event.type); // <--- Add this
 
   switch (event.type) {
@@ -123,6 +131,57 @@ export const handleWebhook = async (req, res) => {
   break;
 }
 
+=======
+
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object;
+      const subscriptionId = session.subscription;
+      const customerId = session.customer;
+      const userId = session.metadata?.userId;
+
+      if (!subscriptionId) {
+        console.warn('No subscription ID in checkout session (likely a one-time payment)');
+        break;
+      }
+
+      if (!userId) {
+        console.warn('No userId found in checkout session metadata');
+        break;
+      }
+
+      try {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const plan = subscription.items.data[0].price.lookup_key;
+
+        const user = await User.findOne({ clerkUserId: userId });
+        
+        if (!user) {
+          console.warn(`User ${userId} not found`);
+        } 
+         if (user.membership === 'premium') {
+          return res.status(400).json({ error: 'You are already a premium user.' });
+        } else {
+          user.membership = 'premium';
+          user.stripe = user.stripe || {};
+          user.stripe.customerId = customerId;
+          user.stripe.subscriptionId = subscriptionId;
+          user.stripe.isActive = true;
+          user.stripe.plan = plan;
+          
+  try {
+    await user.save();
+    console.log(`User ${userId} upgraded to premium with subscription ${subscriptionId}`);
+  } catch (error) {
+    console.error('Error saving user:', error);
+  }
+        } 
+      } catch (err) {
+        console.error('Failed to retrieve subscription or update user:', err);
+      }
+      break;
+    }
+>>>>>>> 3a22b4418bccc21885a18f16d22ae8b56ddcbaec
       case 'payment_intent.created':
         const paymentIntentCreated = event.data.object;
         // Action: Log or initiate actions like email notifications, etc.
@@ -144,6 +203,16 @@ export const handleWebhook = async (req, res) => {
         // You can update your records and retry payment logic here.
         break;
   
+<<<<<<< HEAD
+=======
+      case 'checkout.session.completed':
+        const checkoutSessionCompleted = event.data.object;
+        // Action: Mark the order as complete in your system, send a receipt or confirmation.
+        console.log(`Checkout Session Completed: ID = ${checkoutSessionCompleted.id}`);
+        // Mark user subscription as active, and start the service.
+        break;
+  
+>>>>>>> 3a22b4418bccc21885a18f16d22ae8b56ddcbaec
       case 'customer.created':
         const customerCreated = event.data.object;
         // Action: Add customer data to your database if necessary, send welcome email.

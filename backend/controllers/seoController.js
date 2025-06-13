@@ -283,7 +283,6 @@ const generateAndScoreReport = async (req, res) => {
   }
 };
 
-
 // Delete Report/Phrase
 const deleteReport = async (req, res) => {
   const { jid } = req.params;

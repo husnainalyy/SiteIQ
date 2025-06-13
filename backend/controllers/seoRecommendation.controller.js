@@ -429,17 +429,46 @@ const getAllRecommendations = async (req, res) => {
 };
 
 // 📄 READ ONE recommendation by ID
-const getRecommendationById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const recommendation = await SeoRecommendation.findById(id);
-    if (!recommendation) return res.status(404).json({ error: "Recommendation not found." });
+// const getRecommendationById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const recommendation = await SeoRecommendation.findById(id);
+//     if (!recommendation) return res.status(404).json({ error: "Recommendation not found." });
 
-    return res.status(200).json(recommendation);
+//     return res.status(200).json(recommendation);
+//   } catch (error) {
+//     return res.status(500).json({ error: "Failed to fetch recommendation." });
+//   }
+// };
+
+const getUserSeoRecommendations = async (req, res) => {
+  try {
+    const clerkUserId = req.auth.userId;
+
+    if (!clerkUserId) {
+      return res.status(401).json({ error: 'Unauthorized: Missing Clerk User ID' });
+    }
+
+    // Step 1: Find the user's website
+    const website = await Website.findOne({ clerkuserId: clerkUserId })
+      .populate('seoRecommendation'); // Populate linked SEO recommendations
+
+    if (!website) {
+      return res.status(404).json({ error: 'No website found for this user' });
+    }
+
+    // Step 2: Send only recommendations
+    res.status(200).json({
+      websiteDomain: website.domain,
+      seoRecommendations: website.seoRecommendation, // populated array
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: "Failed to fetch recommendation." });
+    console.error('Error fetching SEO recommendations:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 // ✏️ UPDATE a recommendation's action or notes
 const updateRecommendation = async (req, res) => {
@@ -478,7 +507,7 @@ export {
   generateSEORecommendations,
   generateLightHouseRecommendation,
   getAllRecommendations,
-  getRecommendationById,
+  getUserSeoRecommendations,
   updateRecommendation,
   deleteRecommendation,
 };

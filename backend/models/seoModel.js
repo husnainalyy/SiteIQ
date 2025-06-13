@@ -1,9 +1,9 @@
-  import mongoose from "mongoose";
+import mongoose from "mongoose";
 
-  const PhraseResultSchema = new mongoose.Schema({
-    phrase: { type: String, required: true },
-    jid: { type: String, required: true },
-    rawResponse: { type: Object },
+const PhraseResultSchema = new mongoose.Schema({
+  phrase: { type: String, required: true },
+  jid: { type: String, required: true },
+  rawResponse: { type: Object },
 
     // Scoring
     scores: {
@@ -60,4 +60,4 @@
 
   const SeoReport = mongoose.model("SeoReport", SeoReportSchema);
 
-  export default SeoReport;
+export default SeoReport;

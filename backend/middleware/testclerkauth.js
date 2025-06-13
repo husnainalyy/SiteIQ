@@ -4,6 +4,7 @@ const mockClerkAuth = (req, res, next) => {
     userId: "clerk_user_1234" // Your test user ID
   };
   console.log('mockClerkAuth set req.auth:', req.auth);
+  console.log('mockClerkAuth set req.auth:', req.auth);
   next();
 };
 

@@ -2,6 +2,7 @@ openapi: 3.0.0
 info:
   title: SiteIQ SEO Reports API
   description: API for generating, retrieving, scoring, and managing SEO reports scoped by user and website.
+  description: API for generating, retrieving, scoring, and managing SEO reports scoped by user and website.
   version: 1.0.0
 
 servers:
@@ -81,6 +82,7 @@ components:
           format: date-time
 
 paths:
+  /api/seoreports/generate:
   /api/seoreports/generate:
     post:
       summary: Generate and score a new SEO report for a given phrase and website
@@ -166,6 +168,7 @@ paths:
   /api/seoreports/return/{jid}:
     get:
       summary: Return the saved SEO report data for a given job ID
+      summary: Return the saved SEO report data for a given job ID
       tags: [SEO Reports]
       parameters:
         - in: path
@@ -173,6 +176,7 @@ paths:
           required: true
           schema:
             type: string
+          description: Job ID for the report
           description: Job ID for the report
       responses:
         '200':
@@ -197,6 +201,7 @@ paths:
                   phraseResult:
                     $ref: '#/components/schemas/PhraseResult'
         '400':
+          description: Missing jid parameter
           description: Missing jid parameter
         '404':
           description: Report or phrase not found

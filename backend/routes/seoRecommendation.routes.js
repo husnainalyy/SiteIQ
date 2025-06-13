@@ -10,7 +10,7 @@ import {
   generateSEORecommendations,
   generateLightHouseRecommendation,
   getAllRecommendations,
-  getRecommendationById,
+  getUserSeoRecommendations,
   updateRecommendation,
   deleteRecommendation,
 } from '../controllers/seoRecommendation.controller.js';
@@ -39,10 +39,10 @@ router.post(
   
 
 // READ ALL recommendations for user
-router.get('/', getAllRecommendations);
+router.get('/all', getAllRecommendations);
 
 // READ ONE recommendation by ID
-router.get('/:id', getRecommendationById);
+router.get('/', getUserSeoRecommendations);
 
 // UPDATE a recommendation by ID
 router.put('/:id', updateRecommendation);
