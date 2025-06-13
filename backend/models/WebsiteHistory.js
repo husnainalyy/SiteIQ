@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 
 const WebsiteHistorySchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
+    clerkUserId: {
+      type: String,
       ref: "User",
       required: true,
     },

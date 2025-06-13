@@ -45,39 +45,55 @@ const UserSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: false },
       plan: {
         type: String,
-        enum: ["basic", "pro", "enterprise"],
+        enum: ["basic", "pro", "enterprise","pro_monthly", "pro_yearly"],
         default: "basic",
       },
     },
     loginCount: { type: Number, default: 0, min: 0 },
 
     // Websites & Chat History
-    websites: [
-      {
-        url: {
-          type: String,
-          required: true,
-          match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
-        },
-        seoReport: { type: Object, default: {} },
-        seoRecommendations: [{ type: Object, default: {} }],
-        html: { type: String },
-        css: { type: String },
-        chatHistory: [
-          {
-            userMessage: { type: String, required: true, maxlength: 500 },
-            botResponse: { type: String, required: true, maxlength: 1000 },
-            timestamp: { type: Date, default: Date.now },
-          },
-        ],
-        chatCount: { type: Number, default: 0, min: 0, max: 15 },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+    // websites: [
+    //   {
+    //     url: {
+    //       type: String,
+    //       required: true,
+    //       match: /^(https?:\/\/)?([\w\d-]+\.)+\w{2,}\/?.*$/,
+    //     },
+    //     seoReport: { type: Object, default: {} },
+    //     seoRecommendations: [{ type: Object, default: {} }],
+    //     html: { type: String },
+    //     css: { type: String },
+    //     chatHistory: [
+    //       {
+    //         userMessage: { type: String, required: true, maxlength: 500 },
+    //         botResponse: { type: String, required: true, maxlength: 1000 },
+    //         timestamp: { type: Date, default: Date.now },
+    //       },
+    //     ],
+    //     chatCount: { type: Number, default: 0, min: 0, max: 15 },
+    //     createdAt: { type: Date, default: Date.now },
+    //   },
+    // ],
+
+
 
     // Weekly Website Limit
     weeklyWebsiteLimit: { type: Number, default: 3 },
     lastResetDate: { type: Date, default: Date.now },
+
+    // Subscription & Usage Tracking
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["freemium", "individual", "business"],
+        default: "freemium",
+      },
+      usage: {
+        seoRecommendations: { type: Number, default: 0 },
+        techStackRecommendations: { type: Number, default: 0 },
+        weekStart: { type: Date, default: Date.now }, // tracks weekly reset
+      },
+    },
 
     createdAt: { type: Date, default: Date.now },
   },
@@ -209,6 +225,10 @@ UserSchema.methods.saveChatMessage = async function (
   await this.save();
   return this;
 };
+
+
+
+
 
 const User = mongoose.model("User", UserSchema);
 export default User;
