@@ -1,23 +1,34 @@
+// routes/websiteHistoryRoutes.js
 import express from 'express';
+
+import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
+  createHistory,
   getUserHistory,
-  getWebsiteHistory,
-  clearUserHistory,
-  deleteHistoryEntry
+  getHistoryById,
+  updateHistory,
+  deleteHistory,
 } from "../controllers/history.controller.js";
 
 const router = express.Router();
 
-// ✅ Get full history for a user
-router.get("/:userId", getUserHistory);
+// ✅ Apply Clerk mock authentication middleware
+router.use(mockClerkAuth);
 
-// ✅ Clear all history for a user
-router.delete("/:userId/clear", clearUserHistory);
+// ✅ CREATE - Add a new history record
+router.post('/', createHistory);
 
-// ✅ Delete a specific history entry (by historyId)
-router.delete("/:userId/history/:historyId", deleteHistoryEntry);
+// ✅ READ ALL - Get all history records for authenticated user
+router.get('/', getUserHistory);
 
-// ✅ Get history for a specific website
-router.get("/:userId/website/:websiteUrl", getWebsiteHistory);
+// ✅ READ ONE - Get a specific history record by ID
+router.get('/:id', getHistoryById);
+
+// ✅ UPDATE - Update a history record by ID
+router.put('/:id', updateHistory);
+
+// ✅ DELETE ONE - Delete a history record by ID
+router.delete('/:id', deleteHistory);
+
 
 export default router;

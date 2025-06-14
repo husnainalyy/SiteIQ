@@ -15,9 +15,14 @@ import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import seoRecommendationsRoutes from './routes/seoRecommendation.routes.js';
 import historyRoutes from './routes/history.routes.js';
+import lighthouseRoutes from "./routes/lightHouse.routes.js";
 import seoRoutes from './routes/seoRoutes.js';
 import techStackRoutes from './routes/techstackroute.js';
-import chatRouter from './routes/techstackChatRouter.js';
+import techstackChatRoutes from './routes/techstackChatRoute.js';
+import stripeRoutes from './routes/stripeRoute.js';
+import userChatRoutes from "./routes/userChatRoutes.js";
+
+
 
 // Initialize Express
 const app = express();
@@ -25,7 +30,7 @@ const PORT = process.env.PORT || 4500;
 
 // Middleware
 app.use(cors({
-  origin: '*', // Or '*' for testing
+  origin: 'http://localhost:3000', // Or '*' for testing
   credentials: true
 }));
 
@@ -35,6 +40,9 @@ app.use(clerkMiddleware());
 //middle wares 
 app.use(express.json()); // JSON for other routes
 
+app.use('/api/webhooks', express.raw({ type: 'application/json' })); // Raw body for webhooks
+app.use("/api/chat", techstackChatRoutes);
+app.use('/api/stripe', stripeRoutes); // Mount Stripe routes
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -49,13 +57,17 @@ app.get('/', (req, res) => {
   res.send('Welcome to SiteIQ Backend!');
 });
 
+app.use(express.json()); // JSON for other routes
 app.use('/api/users', userRoutes);
 app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
 app.use('/api/history', historyRoutes);
+app.use("/api/lighthouse", lighthouseRoutes);
+
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use("/api/chat", chatRouter);
+app.use("/api/userchat", userChatRoutes);
+
 
 
 

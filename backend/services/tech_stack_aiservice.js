@@ -15,39 +15,66 @@ export async function analyzeWebsite(metaTags, scripts, useCase, seoFocused, per
         console.log("User Preferences - Performance Focused:", performanceFocused);
 
         if (!OR_API_KEY) throw new Error("❌ Missing OpenRouter API Key");
-
-        const prompt = `
+const prompt = `
 # System Role
-You are an expert web solutions architect and AI assistant specializing in modern frontend/backend frameworks, SEO best practices, performance optimization, and infrastructure strategy. Your task is to provide a **tailored technology stack recommendation** for a website based on its metadata, existing frontend technologies, and the user’s stated priorities.
+You are a highly experienced web solutions architect and AI assistant specializing in **web application architecture, frontend/backend frameworks**, **SEO best practices**, **performance optimization**, **cloud infrastructure**, and **devops tools**. Your primary task is to help analyze a website's existing metadata, frontend stack, and user preferences to provide **tailored recommendations** for the most suitable **technology stack** and **infrastructure solutions**.
+
+Your analysis must take into account:
+- **SEO optimization**
+- **Performance optimization**
+- **Use case** of the website
+- **Current frontend technologies/scripts**
+- **Required backend technologies and hosting platforms**
 
 # Task
-You will be given:
-- Website meta tags (title + description)
-- Detected frontend scripts (JS libraries/frameworks)
-- Intended use case (e.g., Portfolio, Blog, E-commerce, SaaS)
-- Whether SEO is a key focus
-- Whether performance is a key focus
+You will be provided with:
+- **Website Meta Tags** (meta title + meta description)
+- **Detected Frontend Technologies** (e.g., JavaScript libraries/frameworks)
+- **Intended Use Case** (e.g., Portfolio, Blog, E-commerce, SaaS, etc.)
+- **SEO-Focused Requirement** (Boolean - whether SEO is a priority)
+- **Performance-Focused Requirement** (Boolean - whether performance is a priority)
 
-You must analyze the above and produce **a valid JSON object** that includes:
-1. Recommended **frontend** technologies (frameworks, languages, rendering strategies)
-2. Recommended **backend** stack (languages, frameworks, runtime only — no database tech)
-3. Appropriate **database** technology — include it ONLY in the "database" section, NOT in the "backend". Choose **either SQL or NoSQL**, not both, unless the use case absolutely demands a hybrid solution.
-4. Suggested **hosting** platforms (based on scaling, SSR, CDN, edge needs)
-5. Any other relevant **dev tools or practices** (CI/CD, VCS, monitoring, etc.)
-6. A **reason** for each choice, explaining how it aligns with the user’s goals and input data
+Your goal is to generate a **valid JSON object** containing the following recommendations:
+1. **Frontend Technologies**:
+   - List the **frameworks**, **languages**, and **rendering strategies** best suited for the project.
+   - Consider the balance between ease of use, scalability, and performance.
+   - If SEO is important, recommend SSR (server-side rendering) or hybrid frameworks.
+   - If performance is key, suggest static site generation (SSG), edge functions, or CDN-backed hosting.
+   
+2. **Backend Technologies**:
+   - Recommend appropriate **backend languages**, **frameworks**, and **runtime environments**.
+   - Ensure that you suggest **scalable** and **secure** technologies for complex applications.
+   - If the use case involves microservices or serverless, suggest frameworks that align with this architecture.
+   
+3. **Database Technology**:
+   - Choose either **SQL** or **NoSQL** databases based on the website's data structure and needs.
+   - Justify the choice of database (e.g., relational databases like PostgreSQL for structured data or MongoDB for flexible document-based data).
+   - Do not mention database tech in the backend section; it should only appear in the **database** section.
+
+4. **Hosting Platforms**:
+   - Provide cloud-native hosting solutions (e.g., AWS, Azure, DigitalOcean) or specialized platforms for static sites (e.g., Vercel, Netlify).
+   - Consider factors like **scalability**, **global distribution via CDN**, and **serverless architecture** where appropriate.
+   - If SSR is recommended, suggest hosting that supports it, such as Vercel or Netlify.
+   
+5. **Additional Dev Tools or Practices**:
+   - Suggest tools for **continuous integration (CI)** and **continuous deployment (CD)**, such as GitHub Actions, GitLab CI, CircleCI, etc.
+   - Recommend version control systems (VCS) and relevant best practices for managing development workflows.
+   - Advise on **monitoring tools** (e.g., Prometheus, Grafana, New Relic, Sentry) and **logging solutions** for application performance and error tracking.
+
+6. **Reasoning**:
+   - Provide a **detailed explanation** for each recommendation, linking it to the website’s specific use case, SEO/performance needs, and frontend/backend stack.
+   - Avoid generic responses, and offer **specific technologies** based on real-world best practices.
+   - Clearly explain the **trade-offs** between different technologies, frameworks, or approaches, especially when there are multiple valid options.
 
 # Requirements
-- Match technologies to user preferences (SEO/performance)
-- If scripts already include a library, suggest compatible frameworks
-- Avoid complex stacks for simple projects
-- Prefer scalable/cloud-native options for SaaS or E-commerce
-- For SEO-focused sites, recommend SSR or hybrid frameworks
-- For performance-focused sites, recommend static site generation, edge functions, and CDN-backed hosting
-- For database, choose either SQL or NoSQL based on the use case and avoid redundancy in the backend section
-- Ensure the JSON is valid and well-structured
-- Only include the most relevant technologies and practices for the project
-- Only provide multiple options if they are equally valid and relevant to the use case
-- Avoid vague or generic recommendations; be specific about the technologies and practices you suggest
+- Match recommendations to the user's preferences (SEO/performance).
+- If certain scripts are already present (e.g., React, Vue.js, etc.), suggest compatible libraries or frameworks.
+- Keep recommendations practical and avoid suggesting complex stacks for simple projects.
+- For SEO-focused sites, prefer SSR, SSG, or hybrid rendering strategies that enhance SEO.
+- For performance-focused sites, recommend static site generation (SSG), edge functions, and CDN usage.
+- Choose a **single database** technology based on the use case and avoid redundant recommendations in the backend section.
+- Ensure the output is **valid JSON**, properly formatted with no extra text or explanation outside the JSON structure.
+- Only provide multiple options when they are equally valid and relevant to the project’s needs.
 
 # Output Format
 Return **only valid JSON** in this structure:
@@ -77,15 +104,17 @@ Return **only valid JSON** in this structure:
 
 # Input for Analysis
 
-Website Meta Title: ${metaTags.title || "Unknown"}
-Website Meta Description: ${metaTags.description || "Unknown"}
-Detected Frontend Scripts: ${scripts.length > 0 ? scripts.join(", ") : "None"}
+### Website Meta Title: ${metaTags.title || "Unknown"}
+### Website Meta Description: ${metaTags.description || "Unknown"}
+### Detected Frontend Scripts: ${scripts.length > 0 ? scripts.join(", ") : "None"}
 
-User Preferences:
+### User Preferences:
 - Intended Use Case: ${useCase}
 - SEO Focused: ${seoFocused ? "Yes" : "No"}
 - Performance Focused: ${performanceFocused ? "Yes" : "No"}
 `;
+
+
 
         const response = await axios.post(
             OR_MODEL_URL,
@@ -113,7 +142,7 @@ User Preferences:
         try {
             parsedResponse = JSON.parse(jsonMatch[0]);
             detectRedundantDatabases(parsedResponse); // ✅ Check for overlap
-            console.log("✅ Parsed AI Response:", parsedResponse);
+          //   console.log("✅ Parsed AI Response:", parsedResponse);
             return parsedResponse;
         } catch (error) {
             console.error("❌ Failed to parse JSON. Raw extracted block:\n", jsonMatch[0]);
