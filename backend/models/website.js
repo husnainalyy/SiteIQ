@@ -25,17 +25,10 @@ const websiteSchema = new mongoose.Schema(
       }
     },
 
-<<<<<<< HEAD
     seoReport: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SeoReport",
     },
-=======
-    seoReport: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SeoReport",
-    }],
->>>>>>> 3a22b4418bccc21885a18f16d22ae8b56ddcbaec
     seoRecommendation: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "SeoRecommendation",

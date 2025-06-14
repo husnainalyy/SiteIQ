@@ -14,7 +14,7 @@ const Recommendation = () => {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const res = await fetch("http://localhost:4500/api/seoRecommendations");
+        const res = await fetch("http://localhost:5000/api/seoRecommendations");
         if (!res.ok) throw new Error("Failed to fetch recommendations");
 
         const data = await res.json();

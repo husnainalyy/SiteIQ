@@ -18,7 +18,6 @@ import {
 const router = express.Router();
 
 // Middleware to simulate authentication (for testing)
-router.use(mockClerkAuth);
 
 // CREATE (Generate recommendations) with usage limit + increment
 router.post(

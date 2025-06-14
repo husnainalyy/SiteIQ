@@ -2,7 +2,6 @@ import express from "express";
 import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
   generateAndScoreReport,
-  generateAndScoreReport,
   deleteReport,
   returnReport,
   getSeoReports,

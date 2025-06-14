@@ -443,8 +443,9 @@ const getAllRecommendations = async (req, res) => {
 
 const getUserSeoRecommendations = async (req, res) => {
   try {
-    const clerkUserId = req.auth.userId;
-
+    const clerkUserId = req.auth?.userId;
+    console.log(clerkUserId)
+    
     if (!clerkUserId) {
       return res.status(401).json({ error: 'Unauthorized: Missing Clerk User ID' });
     }
