@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createCheckoutSession } from "@/lib/api";
 
 const PricingPlans = () => {
-  const [isAnnual, setIsAnnual] = useState(true);
+  const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -65,7 +65,7 @@ const PricingPlans = () => {
     },
     {
       name: "Pro",
-      price: isAnnual ? 29 : 39,
+      price: isAnnual ? 20 : 20,
       description: "Advanced SEO tools for professionals",
       features: [
         "Unlimited website analysis",
