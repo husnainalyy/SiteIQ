@@ -74,6 +74,8 @@ app.use('/api/history', historyRoutes);
 app.use("/api/lighthouse", lighthouseRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/techstack", techStackRoutes);
+app.use('/api/techstackchat', techstackChatRoutes);
+app.use('/api/stripe', stripeRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
 app.use("/api/userchat", userChatRoutes);   
 app.use("/api/dashboard",dashboardRoutes);

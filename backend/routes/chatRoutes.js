@@ -1,7 +1,6 @@
 // routes/chatRoutes.js
 
 import express from "express";
-import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
     handleChatMessage,
     getChatHistory,

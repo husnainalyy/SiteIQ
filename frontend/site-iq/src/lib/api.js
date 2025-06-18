@@ -55,7 +55,7 @@ export const improveTechStack = async ({ websiteUrl, useCase, seoFocused, perfor
 export const sendChatMessage = async ({ message, conversationId }) => {
   try {
     console.log("Sending chat message:", { message, conversationId });
-    const response = await api.post("/chat/chat", {
+    const response = await api.post("/techstackchat/chat", {
       message,
       conversationId,
     });
