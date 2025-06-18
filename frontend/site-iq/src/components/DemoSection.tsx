@@ -388,261 +388,214 @@ export default function DemoSection() {
               {activeView === 'desktop' && (
                 <motion.div 
                   key="desktop"
-                  className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-6 overflow-hidden"
+                  className="relative mx-auto w-[600px]"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <div className="relative bg-slate-800 rounded-t-xl p-2 shadow-2xl">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <div className="mb-4 flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+                        <div className="flex space-x-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <div className="h-6 w-24 bg-slate-100 dark:bg-slate-700 rounded"></div>
+                      </div>
+                      <div className="p-4">
+                        <AnimatePresence mode="wait">
+                          {step === 0 && (
+                            <motion.div
+                              className="space-y-4"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="h-8 bg-slate-100 dark:bg-slate-700 rounded w-full"></div>
+                              <div className="space-y-2">
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-3/4"></div>
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-4/6"></div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {step === 1 && (
+                            <motion.div
+                              className="space-y-4"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="h-8 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="h-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"></div>
+                                <div className="h-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"></div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6 animate-pulse"></div>
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-4/6 animate-pulse"></div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {step === 2 && (
+                            <motion.div
+                              className="space-y-4"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <motion.div
+                                className="h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-white flex items-center justify-center font-medium"
+                                initial={{ y: -10 }}
+                                animate={{ y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
+                              >
+                                {url || "yourwebsite.com"}
+                              </motion.div>
+                              <div className="grid grid-cols-3 gap-4">
+                                <motion.div
+                                  className="col-span-2 h-40 bg-slate-100 dark:bg-slate-700 rounded"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.3, delay: 0.2 }}
+                                ></motion.div>
+                                <div className="space-y-2">
+                                  <motion.div
+                                    className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.3 }}
+                                  ></motion.div>
+                                  <motion.div
+                                    className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.4 }}
+                                  ></motion.div>
+                                  <motion.div
+                                    className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.5 }}
+                                  ></motion.div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                    <div className="h-6 w-24 bg-slate-100 dark:bg-slate-700 rounded"></div>
                   </div>
-
-                  <AnimatePresence mode="wait">
-                    {step === 0 && (
-                      <motion.div
-                        className="space-y-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="h-8 bg-slate-100 dark:bg-slate-700 rounded w-full"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-3/4"></div>
-                          <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
-                          <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-4/6"></div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {step === 1 && (
-                      <motion.div
-                        className="space-y-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="h-8 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div
-                            className="h-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"
-                            style={{ animationDelay: "0.1s" }}
-                          ></div>
-                          <div
-                            className="h-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
-                        </div>
-                        <div className="space-y-2">
-                          <div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"
-                            style={{ animationDelay: "0.3s" }}
-                          ></div>
-                          <div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6 animate-pulse"
-                            style={{ animationDelay: "0.4s" }}
-                          ></div>
-                          <div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-4/6 animate-pulse"
-                            style={{ animationDelay: "0.5s" }}
-                          ></div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {step === 2 && (
-                      <motion.div
-                        className="space-y-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <motion.div
-                          className="h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-white flex items-center justify-center font-medium"
-                          initial={{ y: -10 }}
-                          animate={{ y: 0 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          {url || "yourwebsite.com"}
-                        </motion.div>
-                        <div className="grid grid-cols-3 gap-4">
-                          <motion.div
-                            className="col-span-2 h-40 bg-slate-100 dark:bg-slate-700 rounded"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.2 }}
-                          ></motion.div>
-                          <div className="space-y-2">
-                            <motion.div
-                              className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.3, delay: 0.3 }}
-                            ></motion.div>
-                            <motion.div
-                              className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.3, delay: 0.4 }}
-                            ></motion.div>
-                            <motion.div
-                              className="h-12 bg-slate-100 dark:bg-slate-700 rounded"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.3, delay: 0.5 }}
-                            ></motion.div>
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <motion.div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.6 }}
-                          ></motion.div>
-                          <motion.div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.7 }}
-                          ></motion.div>
-                          <motion.div
-                            className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-4/6"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.8 }}
-                          ></motion.div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <div className="h-4 bg-slate-800 rounded-b-xl shadow-2xl">
+                    <div className="w-32 h-1 bg-slate-700 rounded-full mx-auto"></div>
+                  </div>
                 </motion.div>
               )}
               
               {activeView === 'mobile' && (
                 <motion.div
                   key="mobile"
-                  className="max-w-[280px] mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-3 overflow-hidden"
+                  className="relative mx-auto w-[280px]"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="mb-2 flex justify-center">
-                    <div className="w-16 h-1 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                  <div className="relative bg-slate-800 rounded-[2rem] p-2 shadow-2xl">
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-10"></div>
+                    <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <div className="h-6 flex items-center justify-center">
+                        <div className="w-16 h-1 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                      </div>
+                      <div className="p-3">
+                        <AnimatePresence mode="wait">
+                          {step === 0 && (
+                            <motion.div
+                              className="space-y-3"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="h-6 bg-slate-100 dark:bg-slate-700 rounded w-full"></div>
+                              <div className="space-y-1">
+                                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-3/4"></div>
+                                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
+                                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-4/6"></div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {step === 1 && (
+                            <motion.div
+                              className="space-y-3"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="h-6 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
+                              <div className="space-y-3">
+                                <div className="h-20 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"></div>
+                                <div className="h-20 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"></div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
+                                <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-5/6 animate-pulse"></div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {step === 2 && (
+                            <motion.div
+                              className="space-y-3"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <motion.div
+                                className="h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-white flex items-center justify-center text-xs font-medium"
+                                initial={{ y: -5 }}
+                                animate={{ y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
+                              >
+                                {url || "yourwebsite.com"}
+                              </motion.div>
+                              <div className="space-y-2">
+                                <motion.div
+                                  className="h-28 bg-slate-100 dark:bg-slate-700 rounded"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.3, delay: 0.2 }}
+                                ></motion.div>
+                                <div className="space-y-2">
+                                  <motion.div
+                                    className="h-8 bg-slate-100 dark:bg-slate-700 rounded"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.3 }}
+                                  ></motion.div>
+                                  <motion.div
+                                    className="h-8 bg-slate-100 dark:bg-slate-700 rounded"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3, delay: 0.4 }}
+                                  ></motion.div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
                   </div>
-
-                  <AnimatePresence mode="wait">
-                    {step === 0 && (
-                      <motion.div
-                        className="space-y-3"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="h-6 bg-slate-100 dark:bg-slate-700 rounded w-full"></div>
-                        <div className="space-y-1">
-                          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-3/4"></div>
-                          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
-                          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-4/6"></div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {step === 1 && (
-                      <motion.div
-                        className="space-y-3"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="h-6 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"></div>
-                        <div className="space-y-3">
-                          <div
-                            className="h-20 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"
-                            style={{ animationDelay: "0.1s" }}
-                          ></div>
-                          <div
-                            className="h-20 bg-slate-100 dark:bg-slate-700 rounded animate-pulse"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
-                        </div>
-                        <div className="space-y-1">
-                          <div
-                            className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-full animate-pulse"
-                            style={{ animationDelay: "0.3s" }}
-                          ></div>
-                          <div
-                            className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-5/6 animate-pulse"
-                            style={{ animationDelay: "0.4s" }}
-                          ></div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {step === 2 && (
-                      <motion.div
-                        className="space-y-3"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <motion.div
-                          className="h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-white flex items-center justify-center text-xs font-medium"
-                          initial={{ y: -5 }}
-                          animate={{ y: 0 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          {url || "yourwebsite.com"}
-                        </motion.div>
-                        <div className="space-y-2">
-                          <motion.div
-                            className="h-28 bg-slate-100 dark:bg-slate-700 rounded"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.2 }}
-                          ></motion.div>
-                          <div className="space-y-2">
-                            <motion.div
-                              className="h-8 bg-slate-100 dark:bg-slate-700 rounded"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.3, delay: 0.3 }}
-                            ></motion.div>
-                            <motion.div
-                              className="h-8 bg-slate-100 dark:bg-slate-700 rounded"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.3, delay: 0.4 }}
-                            ></motion.div>
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <motion.div
-                            className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-full"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.5 }}
-                          ></motion.div>
-                          <motion.div
-                            className="h-3 bg-slate-100 dark:bg-slate-700 rounded w-5/6"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.6 }}
-                          ></motion.div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>

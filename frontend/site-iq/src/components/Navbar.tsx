@@ -48,8 +48,17 @@ const Navbar = () => {
             <ul className="flex space-x-8">
               <li className="relative group">
                 <Link
+                  href="/"
+                  className="font-medium hover:text-accent transition-colors cursor-pointer"
+                >
+                 SITEIQ
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
+                </Link>
+              </li>
+              <li className="relative group">
+                <Link
                   href="/features"
-                  className="font-medium hover:text-accent transition-colors"
+                  className="font-medium hover:text-accent transition-colors cursor-pointer"
                 >
                   Features
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
@@ -57,19 +66,19 @@ const Navbar = () => {
               </li>
               <li className="relative group">
                 <Link
-                  href="/analyze"
-                  className="font-medium hover:text-accent transition-colors"
+                  href="/pricing"
+                  className="font-medium hover:text-accent transition-colors cursor-pointer"
                 >
-                  Analyze
+                  Pricing
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
               <li className="relative group">
                 <Link
-                  href="/subscribe"
-                  className="font-medium hover:text-accent transition-colors"
+                  href="/aboutus"
+                  className="font-medium hover:text-accent transition-colors cursor-pointer"
                 >
-                  Upgrade to Premium
+                  About Us
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
@@ -79,12 +88,12 @@ const Navbar = () => {
           <div className="flex items-center gap-4">
             <Button 
               variant="outline" 
-              className="hidden sm:flex hover:border-accent hover:text-accent transition-all"
+              className="flex hover:border-accent hover:text-accent hover:bg-transparent transition-all cursor-pointer"
               asChild
             >
               <Link href="/sign-in">Login</Link>
             </Button>
-            <Button className="gradient-bg relative overflow-hidden group" asChild>
+            <Button className="gradient-bg relative overflow-hidden group hidden sm:flex" asChild>
               <Link href="/sign-up">
                 <span className="relative z-10">Get Started</span>
                 <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
@@ -102,42 +111,53 @@ const Navbar = () => {
       </div>
       
       {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="bg-white/90 backdrop-blur-md px-4 py-2 shadow-lg">
-            <nav className="flex flex-col space-y-4 py-3">
-              <Link 
-                href="/features" 
-                className="font-medium hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </Link>
-              <Link 
-                href="/analyze" 
-                className="font-medium hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Analyze
-              </Link>
-              <Link 
-                href="/subscribe" 
-                className="font-medium hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Subscribe
-              </Link>
-              <Link 
-                href="/login" 
-                className="font-medium hover:text-accent transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Login
-              </Link>
-            </nav>
-          </div>
+      <div 
+        className={`md:hidden fixed top-[72px] left-0 right-0 transform transition-all duration-300 ease-in-out cursor-click ${
+          mobileMenuOpen 
+            ? 'translate-y-0 opacity-100' 
+            : '-translate-y-full opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="bg-white/90 backdrop-blur-md px-4 py-2 shadow-lg">
+          <nav className="flex flex-col space-y-4 py-3">
+            <Link 
+              href="/" 
+              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              SITEIQ
+            </Link>
+            <Link 
+              href="/features" 
+              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </Link>
+            <Link 
+              href="/pricing" 
+              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/aboutus" 
+              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About Us
+            </Link>
+            <Link 
+              href="/login" 
+              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </Link>
+          </nav>
         </div>
-      )}
+      </div>
     </header>
   );
 };
