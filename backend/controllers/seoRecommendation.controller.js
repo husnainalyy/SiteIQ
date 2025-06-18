@@ -12,7 +12,7 @@ const generateSEORecommendations = async (req, res) => {
         console.log(clerkuserId);
 
         if (!req.auth || !req.auth.userId) {
-            console.warn("❌ Missing auth context.");
+            console.warn("❌ Missing auth context."); 
             return res.status(401).json({ error: "Unauthrized" });
         }
 
