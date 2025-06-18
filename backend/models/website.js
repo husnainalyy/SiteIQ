@@ -1,29 +1,29 @@
 import mongoose from "mongoose";
 
 const chatMessageSchema = new mongoose.Schema(
-  {
-    userMessage: { type: String, required: true },
-    botResponse: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
+    {
+        userMessage: { type: String, required: true },
+        botResponse: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+    },
+    { _id: false }
 );
 
 const websiteSchema = new mongoose.Schema(
-  {
-    clerkuserId: { type: String, required: true },
+    {
+        clerkuserId: { type: String, required: true },
 
-    domain: {
-      type: String,
-      required: true,
-      // optional: ensure it's a valid domain format using regex
-      validate: {
-        validator: function (v) {
-          return /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v.replace(/^https?:\/\//, ''));
+        domain: {
+            type: String,
+            required: true,
+            // optional: ensure it's a valid domain format using regex
+            validate: {
+                validator: function (v) {
+                    return /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v.replace(/^https?:\/\//, ''));
+                },
+                message: props => `${props.value} is not a valid domain`,
+            }
         },
-        message: props => `${props.value} is not a valid domain`,
-      }
-    },
 
     seoReport: {
       type: mongoose.Schema.Types.ObjectId,
@@ -53,15 +53,19 @@ const websiteSchema = new mongoose.Schema(
 
 // 🛠 Pre-save hook to normalize domain
 websiteSchema.pre("save", function (next) {
-  if (this.isModified("domain")) {
-    let raw = this.domain.trim();
-    // Strip existing protocol
-    raw = raw.replace(/^https?:\/\//i, "");
-    // Store as https://domain.tld
-    this.domain = `https://${raw}`;
-  }
-  next();
+    if (this.isModified("domain")) {
+        let raw = this.domain.trim();
+        // Strip existing protocol
+        raw = raw.replace(/^https?:\/\//i, "");
+        // Store as https://domain.tld
+        this.domain = `https://${raw}`;
+    }
+    next();
 });
 
-const Website = mongoose.model("Website", websiteSchema);
+const Website = mongoose.models.Website
+  ? mongoose.model("Website")
+  : mongoose.model("Website", websiteSchema);
+
 export default Website;
+

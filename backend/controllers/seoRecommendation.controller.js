@@ -1,7 +1,7 @@
 import axios from "axios";
 import SeoReport from "../models/seoModel.js";
-import SeoRecommendation from "../models/seoRecommendation.js";
-import Website from "../models/website.js"; //new
+import SeoRecommendation from "../models/SeoRecommendation.js";
+import Website from "../models/Website.js"; //new
 
 
 const generateSEORecommendations = async (req, res) => {
@@ -194,41 +194,41 @@ ${JSON.stringify(scoresArray, null, 2)}
 
 
 const generateLightHouseRecommendation = async (req, res) => {
-  try {
-    console.log("✅ Step 1: Extracting user ID from auth...");
-    const clerkUserId = req.auth.userId;
-    console.log(clerkUserId);
+    try {
+        console.log("✅ Step 1: Extracting user ID from auth...");
+        const clerkUserId = req.auth.userId;
+        console.log(clerkUserId);
 
-    if (!req.auth || !req.auth.userId) {
-      console.warn("❌ Missing auth context.");
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+        if (!req.auth || !req.auth.userId) {
+            console.warn("❌ Missing auth context.");
+            return res.status(401).json({ error: "Unauthorized" });
+        }
 
-    console.log("✅ Step 2: Extracting domain from request body...");
-    const { domain } = req.body;
+        console.log("✅ Step 2: Extracting domain from request body...");
+        const { domain } = req.body;
 
-    if (!domain) {
-      console.warn("❌ Missing required field: domain.");
-      return res.status(400).json({ error: "Missing required field: domain." });
-    }
+        if (!domain) {
+            console.warn("❌ Missing required field: domain.");
+            return res.status(400).json({ error: "Missing required field: domain." });
+        }
 
-    console.log("✅ Step 3: Searching for Lighthouse report in DB...");
-    const seoReportDoc = await SeoReport.findOne({ clerkUserId, domain });
-    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
+        console.log("✅ Step 3: Searching for Lighthouse report in DB...");
+        const seoReportDoc = await SeoReport.findOne({ clerkUserId, domain });
+        console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
 
-    if (!seoReportDoc || !seoReportDoc.lighthouse) {
-      console.warn("❌ Lighthouse report not found.");
-      return res.status(404).json({
-        error: "Lighthouse report not found.",
-      });
-    }
+        if (!seoReportDoc || !seoReportDoc.lighthouse) {
+            console.warn("❌ Lighthouse report not found.");
+            return res.status(404).json({
+                error: "Lighthouse report not found.",
+            });
+        }
 
-    console.log("✅ Step 4: Validating Novita API key...");
-    const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
-    if (!NOVITA_API_KEY) {
-      console.error("❌ Missing Novita API key in environment variables.");
-      return res.status(500).json({ error: "Server configuration error." });
-    }
+        console.log("✅ Step 4: Validating Novita API key...");
+        const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
+        if (!NOVITA_API_KEY) {
+            console.error("❌ Missing Novita API key in environment variables.");
+            return res.status(500).json({ error: "Server configuration error." });
+        }
 
     console.log("✅ Step 5: Extracting Lighthouse data...");
     const lighthouseData = seoReportDoc.lighthouseResult;
@@ -287,8 +287,8 @@ const generateLightHouseRecommendation = async (req, res) => {
     // Now use simplifiedData in your prompt
     console.log('Processed Lighthouse data:', simplifiedData);
 
-    console.log("✅ Step 6: Constructing prompt...");
-const prompt = `You are an expert web performance analyst. You are given a structured Lighthouse report that includes:
+        console.log("✅ Step 6: Constructing prompt...");
+        const prompt = `You are an expert web performance analyst. You are given a structured Lighthouse report that includes:
 
 - *Overall scores* for:
   - *Performance* (0 to 1 or null)
@@ -363,35 +363,35 @@ ${JSON.stringify(simplifiedData, null, 2)}
       }
     );
 
-    if (!response.data.choices || response.data.choices.length === 0) {
-      console.error("❌ AI model returned empty response.");
-      return res.status(500).json({ error: "AI model returned an empty response." });
-    }
+        if (!response.data.choices || response.data.choices.length === 0) {
+            console.error("❌ AI model returned empty response.");
+            return res.status(500).json({ error: "AI model returned an empty response." });
+        }
 
-    console.log("✅ Step 8: Extracting recommendation text...");
-    const lighthouseRecommendationText = response.data.choices[0].message.content.trim();
+        console.log("✅ Step 8: Extracting recommendation text...");
+        const lighthouseRecommendationText = response.data.choices[0].message.content.trim();
 
-    console.log("✅ Step 9: Saving recommendation to database...");
-    const newRecommendation = new SeoRecommendation({
-      clerkUserId,
-      domain,
-      seoReport: seoReportDoc._id,
-      recommendations: {
-        lighthouse: lighthouseRecommendationText,
-        seo: "" // Leave empty as this is Lighthouse-specific
-      },
-      action: "Analyzed",
-    });
+        console.log("✅ Step 9: Saving recommendation to database...");
+        const newRecommendation = new SeoRecommendation({
+            clerkUserId,
+            domain,
+            seoReport: seoReportDoc._id,
+            recommendations: {
+                lighthouse: lighthouseRecommendationText,
+                seo: "" // Leave empty as this is Lighthouse-specific
+            },
+            action: "Analyzed",
+        });
 
-    await newRecommendation.save();
+        await newRecommendation.save();
 
-    console.log("✅ Step 10: Successfully saved and responding to client.");
-    return res.status(200).json({
-      message: "Lighthouse recommendation generated and saved successfully.",
-      recommendation: {
-        lighthouse: lighthouseRecommendationText
-      }
-    });
+        console.log("✅ Step 10: Successfully saved and responding to client.");
+        return res.status(200).json({
+            message: "Lighthouse recommendation generated and saved successfully.",
+            recommendation: {
+                lighthouse: lighthouseRecommendationText
+            }
+        });
 
   } catch (error) {
     console.error("❌ Error generating Lighthouse recommendations:", error.response?.data || error.message || error);
@@ -460,62 +460,62 @@ const getUserSeoRecommendations = async (req, res) => {
     const clerkUserId = req.auth?.userId;
     console.log(clerkUserId)
 
-    if (!clerkUserId) {
-      return res.status(401).json({ error: 'Unauthorized: Missing Clerk User ID' });
+        if (!clerkUserId) {
+            return res.status(401).json({ error: 'Unauthorized: Missing Clerk User ID' });
+        }
+
+        // Step 1: Find the user's website
+        const website = await Website.findOne({ clerkuserId: clerkUserId })
+            .populate('seoRecommendation'); // Populate linked SEO recommendations
+
+        if (!website) {
+            return res.status(404).json({ error: 'No website found for this user' });
+        }
+
+        // Step 2: Send only recommendations
+        res.status(200).json({
+            websiteDomain: website.domain,
+            seoRecommendations: website.seoRecommendation, // populated array
+        });
+
+    } catch (error) {
+        console.error('Error fetching SEO recommendations:', error);
+        res.status(500).json({ error: 'Server error' });
     }
-
-    // Step 1: Find the user's website
-    const website = await Website.findOne({ clerkuserId: clerkUserId })
-      .populate('seoRecommendation'); // Populate linked SEO recommendations
-
-    if (!website) {
-      return res.status(404).json({ error: 'No website found for this user' });
-    }
-
-    // Step 2: Send only recommendations
-    res.status(200).json({
-      websiteDomain: website.domain,
-      seoRecommendations: website.seoRecommendation, // populated array
-    });
-
-  } catch (error) {
-    console.error('Error fetching SEO recommendations:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
 };
 
 
 // ✏ UPDATE a recommendation's action or notes
 const updateRecommendation = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { action, notes } = req.body;
+    try {
+        const { id } = req.params;
+        const { action, notes } = req.body;
 
-    const updated = await SeoRecommendation.findByIdAndUpdate(
-      id,
-      { action, notes },
-      { new: true }
-    );
+        const updated = await SeoRecommendation.findByIdAndUpdate(
+            id,
+            { action, notes },
+            { new: true }
+        );
 
-    if (!updated) return res.status(404).json({ error: "Recommendation not found." });
-    return res.status(200).json(updated);
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to update recommendation." });
-  }
+        if (!updated) return res.status(404).json({ error: "Recommendation not found." });
+        return res.status(200).json(updated);
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to update recommendation." });
+    }
 };
 
 // ❌ DELETE a recommendation
 const deleteRecommendation = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const deleted = await SeoRecommendation.findByIdAndDelete(id);
-    if (!deleted) return res.status(404).json({ error: "Recommendation not found." });
+        const deleted = await SeoRecommendation.findByIdAndDelete(id);
+        if (!deleted) return res.status(404).json({ error: "Recommendation not found." });
 
-    return res.status(200).json({ message: "Recommendation deleted." });
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to delete recommendation." });
-  }
+        return res.status(200).json({ message: "Recommendation deleted." });
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to delete recommendation." });
+    }
 };
 
 export {

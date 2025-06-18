@@ -21,11 +21,17 @@ import techStackRoutes from './routes/techstackroute.js';
 import techstackChatRoutes from './routes/techstackChatRoute.js';
 import stripeRoutes from './routes/stripeRoute.js';
 import userChatRoutes from "./routes/userChatRoutes.js";
-
-
+import dashboardRoutes from "./routes/dashboard.js";
+import chatRoutes from './routes/chatRoutes.js';
+import websiteRoutes from "./routes/websiteRoutes.js";
 
 // Initialize Express
 const app = express();
+app.use(
+    '/api/webhooks',
+    express.raw({ type: 'application/json' }),
+    webhookRoutes
+);
 app.use(express.json()); // To parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies (e.g. from forms)
 
@@ -44,9 +50,7 @@ app.use(clerkMiddleware());
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' })); // Raw body for webhooks
 app.use(express.json()); // JSON for other routes
-app.use("/api/chat", techstackChatRoutes);
 
-app.use('/api/stripe', stripeRoutes); // Mount Stripe routes
 
 
 
@@ -65,11 +69,10 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/users', userRoutes);
-app.use('/api/webhooks', webhookRoutes); // Mount webhook routes
 app.use('/api/seoreports', seoRoutes); // Mount webhook routes
 app.use('/api/history', historyRoutes);
 app.use("/api/lighthouse", lighthouseRoutes);
-
+app.use("/api/websites", websiteRoutes);
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
 app.use("/api/userchat", userChatRoutes);   
