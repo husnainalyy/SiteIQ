@@ -72,7 +72,7 @@ app.use("/api/lighthouse", lighthouseRoutes);
 
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use("/api/userchat", userChatRoutes);
+app.use("/api/userchat", userChatRoutes);   
 
 
 

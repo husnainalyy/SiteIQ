@@ -34,7 +34,7 @@ const generateSEORecommendations = async (req, res) => {
     // Step 2: Validate and extract seoReport
     if (!websiteDoc || !websiteDoc.seoReport || websiteDoc.seoReport.length === 0) {
       console.warn("❌ Website not found or no SEO reports attached.");
-      return res.status(404).json({
+      return res.status(401).json({
         error: "Website not found or contains no SEO reports.",
       });
     }
