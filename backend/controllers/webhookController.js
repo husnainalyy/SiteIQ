@@ -4,13 +4,17 @@ import User from '../models/User.js';
 export const handleClerkWebhook = async (req, res) => {
     console.log('Webhook received:', req.body);
     try {
-        // Use raw body for signature verification
-        const payload = req.body;
-        const svixHeaders = req.headers;
+        const rawBody = req.body;                // this is now a Buffer
+        const signatureHeaders = {
+            'svix-id': req.header('svix-id'),
+            'svix-timestamp': req.header('svix-timestamp'),
+            'svix-signature': req.header('svix-signature'),
+        };
+
 
         // Verify webhook signature
         const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET_KEY);
-        const event = webhook.verify(payload, svixHeaders);
+        const event = webhook.verify(rawBody, signatureHeaders);
         const eventType = event.type;
 
         if (eventType === 'user.created') {
