@@ -39,7 +39,7 @@ export default function ChatPage() {
         async function loadChatHistory() {
             try {
                 setIsLoading(true)
-                const res = await axiosInstance.get(`/api/websiteChat/${websiteId}`)
+                const res = await axiosInstance.get(`/websiteChat/${websiteId}`)
                 setChatHistory(res.data.chatHistory || [])
 
                 // Try to get domain name from localStorage or set a placeholder
@@ -108,7 +108,7 @@ export default function ChatPage() {
         setIsSending(true)
 
         try {
-            const res = await axiosInstance.post(`/api/websiteChat`, {
+            const res = await axiosInstance.post(`/websiteChat`, {
                 websiteId,
                 message: userMessage,
             })
@@ -209,7 +209,7 @@ export default function ChatPage() {
             <div className="w-80 bg-white border-r border-slate-200 p-4 flex flex-col">
                 <div className="flex items-center gap-2 mb-6">
                     <Button variant="outline" size="icon" asChild>
-                        <Link href="/allwebsites">
+                        <Link href="/user-dashboard">
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
                     </Button>
