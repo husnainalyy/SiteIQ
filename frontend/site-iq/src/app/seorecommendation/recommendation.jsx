@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoRecommendation from "@/components/SeoRecommendations";
+import axios from "@/lib/axiosInstance.js";
 import { Search, Sparkles, TrendingUp, Zap } from "lucide-react";
 import axios from "@/lib/axiosinstance.js";
 
@@ -15,7 +16,7 @@ const Recommendation = () => {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const res = await fetch("http://localhost:4500/api/seorecommendations");
+        const res = axios.post('/seoRecommendations/generate');
         if (!res.ok) throw new Error("Failed to fetch recommendations");
 
         const data = await res.json();

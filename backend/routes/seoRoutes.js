@@ -3,17 +3,22 @@ import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
   generateAndScoreReport,
   deleteReport,
-  returnReport
+  returnReport,
+  getSeoReports,
+  deletePhraseResultByPhrase
 } from '../controllers/seoController.js';
 
 const router = express.Router(); 
 
-router.use(mockClerkAuth);
 
-router.post("/generate", generateAndScoreReport);   // body {domain, phrase}
+router.post("/generate", generateAndScoreReport);   // body {domain, phrase}awe
 
 router.delete("/delete/:jid", deleteReport); // params {jid} 
 
 router.get("/return/:jid", returnReport);  // params {jid}
+
+router.get("/websites/:websiteId", getSeoReports);
+
+router.delete("/delete/:websiteId/:phrase",deletePhraseResultByPhrase); // params {websiteId, phrase}
 
 export default router;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { sendChatMessage, getChatHistory, deleteChat, getChatMessages } from '@/lib/api';
 import { ChatHistory as ChatHistoryType } from '../types';
 
@@ -10,6 +10,18 @@ export const useChat = () => {
   const [chatHistory, setChatHistory] = useState<ChatHistoryType[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [previousChatId, setPreviousChatId] = useState<string | null>(null);
+
+  // Load chat history when component mounts
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
+
+  // Load chat messages when selectedChatId changes
+  useEffect(() => {
+    if (selectedChatId) {
+      handleChatSelect(selectedChatId);
+    }
+  }, [selectedChatId]);
 
   const loadChatHistory = async () => {
     try {
@@ -35,6 +47,7 @@ export const useChat = () => {
       setShowChat(true);
       setChatLoading(true);
       setSelectedChatId(chatId);
+      setPreviousChatId(chatId);
       
       const response = await getChatMessages(chatId);
       
@@ -67,6 +80,7 @@ export const useChat = () => {
       if (selectedChatId === chatId) {
         setChatMessages([]);
         setSelectedChatId(null);
+        setShowChat(false);
       }
       await loadChatHistory();
     } catch (err) {
