@@ -8,8 +8,8 @@ import incrementUsage from '../utils/incrementUsage.js';
 
 import {
   generateSEORecommendations,
+  getSEORecommendations,
   generateLightHouseRecommendation,
-  getAllRecommendations,
   getUserSeoRecommendations,
   updateRecommendation,
   deleteRecommendation,
@@ -21,7 +21,7 @@ const router = express.Router();
 
 // CREATE (Generate recommendations) with usage limit + increment
 router.post(
-    '/generate',
+    '/generate/:websiteId',
     checkSubscriptionLimit('seo'),  
     async (req, res, next) => {
       await incrementUsage(req.auth.userId, 'seo');  // call utility
@@ -35,13 +35,9 @@ router.post(
     '/generate-lighthouse',
     generateLightHouseRecommendation      
   );
-  
-
-// READ ALL recommendations for user
-router.get('/all', getAllRecommendations);
 
 // READ ONE recommendation by ID
-router.get('/', getUserSeoRecommendations);
+router.get('/:websiteId', getSEORecommendations);
 
 // UPDATE a recommendation by ID
 router.put('/:id', updateRecommendation);

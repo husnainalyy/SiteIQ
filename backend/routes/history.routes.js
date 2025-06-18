@@ -13,7 +13,6 @@ import {
 const router = express.Router();
 
 // ✅ Apply Clerk mock authentication middleware
-router.use(mockClerkAuth);
 
 // ✅ CREATE - Add a new history record
 router.post('/', createHistory);

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -128,9 +134,8 @@ const MetricCard = ({ icon: Icon, label, value, unit, description, score }) => {
   );
 };
 
-export default function SeoReportPage() {
-  const { websiteId } = useParams()
-
+export default function SeoReportPage({ params }) {
+  const  websiteId  =  params.websiteId?.[0];
   const [domain, setDomain] = useState("");
   const [loading, setLoading] = useState(false);
   const [seoReport, setSeoReport] = useState(null);
@@ -147,9 +152,7 @@ export default function SeoReportPage() {
   const loadExistingReport = async (Id) => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(
-        LIGHTHOUSE_API.GET_ONE(Id)
-      );
+      const response = await axiosInstance.get(LIGHTHOUSE_API.GET_ONE(Id));
       if (response.data) {
         setSeoReport(response.data);
         if (response.data.lighthouse?.lighthouseReport) {
@@ -192,11 +195,11 @@ export default function SeoReportPage() {
           // Add more detailed logging
           console.log("Lighthouse report structure:", {
             hasCategories:
-              !! response.data.lighthouse.lighthouseReport.categories,
+              !!response.data.lighthouse.lighthouseReport.categories,
             hasPerformance:
-              !! response.data.lighthouse.lighthouseReport.categories
+              !!response.data.lighthouse.lighthouseReport.categories
                 ?.performance,
-            hasAudits: !! response.data.lighthouse.lighthouseReport.audits,
+            hasAudits: !!response.data.lighthouse.lighthouseReport.audits,
             categoriesKeys: response.data.lighthouse.lighthouseReport.categories
               ? Object.keys(
                   response.data.lighthouse.lighthouseReport.categories
@@ -462,8 +465,7 @@ export default function SeoReportPage() {
               <span className="text-accent">SEO</span> Performance Report
             </h1>
             <p className="text-gray-600">
-              {
-                seoReport?.lighthouse?.lighthouseReport?.finalDisplayedUrl ||
+              {seoReport?.lighthouse?.lighthouseReport?.finalDisplayedUrl ||
                 domain}
             </p>
           </div>
@@ -627,7 +629,7 @@ export default function SeoReportPage() {
                     variant="outline"
                     size="sm"
                     className="bg-accent text-primary-foreground"
-                    onClick={() => router.push("/seoreport/advanced")}
+                    onClick={() => router.push(`/seoreport/advanced/${websiteId}`)}
                   >
                     Advanced Analysis
                   </Button>
