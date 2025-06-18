@@ -157,7 +157,7 @@ const generateAndScoreReport = async (req, res) => {
                     search_engine: "google",
                     region: "global",
                     language: "en",
-                    max_results: 30,
+                    max_results: 15,
                     phrase,
                 },
                 {
