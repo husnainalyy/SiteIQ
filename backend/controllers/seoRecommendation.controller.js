@@ -406,7 +406,8 @@ ${JSON.stringify(simplifiedData, null, 2)}
 const getSEORecommendations = async (req, res) => {
   try {
     console.log("✅ Step 1: Auth check");
-    const clerkUserId = "user_2yY5xpi0yshFceryCdEoS4xW1Lt";
+    const clerkUserId = req.auth?.userId; // hardcoded for now
+    console.log(clerkUserId);
 
     if (!clerkUserId) {
       console.warn("❌ Missing auth context.");

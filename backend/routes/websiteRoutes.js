@@ -1,5 +1,4 @@
 import express from "express";
-import mockClerkAuth from "../middleware/testclerkauth.js";
 import {
     getAllWebsites,
     getWebsiteById
@@ -7,8 +6,6 @@ import {
 
 const router = express.Router();
 
-// all endpoints require an authenticated user
-router.use(mockClerkAuth);
 
 // GET all websites for the user
 router.get("/", getAllWebsites);

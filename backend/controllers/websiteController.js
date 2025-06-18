@@ -4,6 +4,7 @@ import Website from "../models/Website.js";
 export const getAllWebsites = async (req, res) => {
     try {
         const userId = req.auth?.userId;
+
         if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
         const sites = await Website

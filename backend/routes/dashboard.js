@@ -10,7 +10,6 @@ import mockClerkAuth from "../middleware/testclerkauth.js";
 
 const router = express.Router();
 
-router.use(mockClerkAuth); // Apply mock authentication middleware
 
 
 // Routes

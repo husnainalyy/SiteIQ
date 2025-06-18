@@ -8,7 +8,7 @@ import { ArrowLeft, Send, Bot, User, Globe, MessageSquare, Calendar } from "luci
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
-
+import axiosInstance from "@/lib/axiosInstance";
 // Base URL for API calls
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
 
@@ -39,10 +39,8 @@ export default function ChatPage() {
         async function loadChatHistory() {
             try {
                 setIsLoading(true)
-                const res = await fetch(`${API_BASE_URL}/api/websiteChat/${websiteId}`)
-                if (!res.ok) throw new Error("Failed to fetch chat history")
-                const data = await res.json()
-                setChatHistory(data.chatHistory || [])
+                const res = await axiosInstance.get(`/api/websiteChat/${websiteId}`)
+                setChatHistory(res.data.chatHistory || [])
 
                 // Try to get domain name from localStorage or set a placeholder
                 const storedSites = localStorage.getItem("websites")
@@ -110,20 +108,18 @@ export default function ChatPage() {
         setIsSending(true)
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/websiteChat`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    websiteId,
-                    message: userMessage,
-                }),
+            const res = await axiosInstance.post(`/api/websiteChat`, {
+                websiteId,
+                message: userMessage,
             })
 
-            if (!res.ok) throw new Error("Failed to send message")
 
-            const data = await res.json()
+            const data = res.data
+            if (!data || !data.reply) {
+                console.error("Failed to send message")
+                setCurrentUserMessage("")
+                return
+            }
 
             // Start typing animation
             setCurrentResponse(data.reply)

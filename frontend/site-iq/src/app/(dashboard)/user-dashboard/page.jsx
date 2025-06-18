@@ -20,7 +20,7 @@ import {
     ArrowRight,
 } from "lucide-react"
 import Link from "next/link"
-
+import axiosInstance from "@/lib/axiosInstance.js";
 
 // Components
 function ProfileSection({ profile, isLoading }) {
@@ -272,35 +272,29 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                setIsLoading(true)
-                setError(null)
+            setIsLoading(true)
+            setError(null)
 
-                // Fetch all dashboard data from your APIs
-                const [profileRes, websitesRes, chatRes, recommendationsRes, techStackRes] = await Promise.all([
-                    fetch("http://localhost:5000/api/dashboard/overview"),
-                    fetch("http://localhost:5000/api/dashboard/websites"),
-                    fetch("http://localhost:5000/api/dashboard/chat-history"),
-                    fetch("http://localhost:5000/api/dashboard/seo-recommendations"),
-                    fetch("http://localhost:5000/api/dashboard/techstack"),
-                ])
+            // Fetch all dashboard data from your APIs using axiosInstance
+            const [
+                profileRes,
+                websitesRes,
+                chatRes,
+                recommendationsRes,
+                techStackRes,
+            ] = await Promise.all([
+                axiosInstance.get("/dashboard/overview"),
+                axiosInstance.get("/dashboard/websites"),
+                axiosInstance.get("/dashboard/chat-history"),
+                axiosInstance.get("/dashboard/seo-recommendations"),
+                axiosInstance.get("/dashboard/techstack"),
+            ])
 
-                if (!profileRes.ok || !websitesRes.ok || !chatRes.ok || !recommendationsRes.ok || !techStackRes.ok) {
-                    throw new Error("Failed to fetch dashboard data")
-                }
-
-                const [profileData, websitesData, chatData, recommendationsData, techStackData] = await Promise.all([
-                    profileRes.json(),
-                    websitesRes.json(),
-                    chatRes.json(),
-                    recommendationsRes.json(),
-                    techStackRes.json(),
-                ])
-
-                setProfile(profileData)
-                setWebsites(websitesData)
-                setChatHistory(chatData)
-                setRecommendations(recommendationsData)
-                setTechStack(techStackData)
+            setProfile(profileRes.data)
+            setWebsites(websitesRes.data)
+            setChatHistory(chatRes.data)
+            setRecommendations(recommendationsRes.data)
+            setTechStack(techStackRes.data)
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred")
                 console.error("Dashboard fetch error:", err)

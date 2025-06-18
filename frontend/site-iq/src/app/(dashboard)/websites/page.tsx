@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import axios from "@/lib/axiosInstance.js";
 
 // Base URL for API calls
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
@@ -32,10 +33,8 @@ export default function WebsitesPage() {
         async function loadWebsites() {
             try {
                 setLoading(true)
-                const res = await fetch(`${API_BASE_URL}/api/websites`)
-                if (!res.ok) throw new Error("Failed to fetch websites")
-                const data = await res.json()
-                setSites(data)
+                const res = await axios.get(`/websites`);
+                setSites(res.data);
             } catch (error) {
                 console.error(error)
                 setError("Failed to load websites. Please try again.")

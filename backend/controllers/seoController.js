@@ -331,7 +331,7 @@ const deleteReport = async (req, res) => {
 const returnReport = async (req, res) => {
     const { jid } = req.params;
     const clerkUserId = req.auth.userId;
-
+    console.log(clerkUserId);
     if (!jid) {
         return res.status(400).json({ error: "Job ID not included in parameter" });
     }

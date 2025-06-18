@@ -5,7 +5,6 @@ import authenticateUserByClerkId from "../middleware/authenticateUserByClerkId.j
 
 const router = express.Router();
 
-router.use(authenticateUserByClerkId);
 
 router.get("/profile", getUserProfile);
 router.put("/profile", updateUserProfile);
