@@ -79,7 +79,7 @@ function WebsitesSection({ websites, isLoading }) {
                     <Globe className="w-5 h-5 mr-2 text-blue-600" />
                     Your Websites
                 </CardTitle>
-                <Link href="/dashboard/websites">
+                <Link href="/websites">
                     <Button variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
                         View All <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
@@ -183,7 +183,7 @@ function ChatSection({ chatHistory, isLoading }) {
                     <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
                     Chat History
                 </CardTitle>
-                <Link href="/dashboard/chat">
+                <Link href="/chat">
                     <Button variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
                         View All <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
@@ -228,7 +228,7 @@ function TechStackSection({
                     <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
                     Tech Stack Improvements
                 </CardTitle>
-                <Link href="/dashboard/techstack">
+                <Link href="/techstack">
                     <Button variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
                         View All <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>

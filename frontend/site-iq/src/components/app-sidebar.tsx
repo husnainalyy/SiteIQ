@@ -28,24 +28,8 @@ const seoMenuItems = [
         icon: FileText,
         items: [
             {
-                title: "Advanced",
-                url: "/dashboard/seo/advanced",
-            },
-            {
                 title: "base",
                 url: "/seoreport/base",
-            },
-        ],
-        subItems: [
-            {
-                title: "Recommendations",
-                url: "/recommendation",
-                icon: CheckSquare,
-            },
-            {
-                title: "Chat",
-                url: "/chat",
-                icon: MessageSquare,
             },
         ],
     },
@@ -53,12 +37,16 @@ const seoMenuItems = [
 
 const techStackItems = [
     {
+        title: "Tech Stack",
+        url: "/techstack",
+    },
+    {
         title: "Improvements",
-        url: "/techstack/improvements",
+        url: "/techstack/improve",
     },
     {
         title: "Recommendations",
-        url: "/techstack/recommendations",
+        url: "/techstack/recommend",
     },
 ]
 
@@ -141,20 +129,6 @@ export function AppSidebar() {
                                                 <SidebarMenuSubItem key={subItem.title}>
                                                     <SidebarMenuSubButton asChild className="hover:bg-blue-50 hover:text-blue-700">
                                                         <a href={subItem.url}>{subItem.title}</a>
-                                                    </SidebarMenuSubButton>
-                                                </SidebarMenuSubItem>
-                                            ))}
-                                        </SidebarMenuSub>
-
-                                        {/* Sub-items under SEO Report */}
-                                        <SidebarMenuSub>
-                                            {seoMenuItems[0].subItems.map((subItem) => (
-                                                <SidebarMenuSubItem key={subItem.title}>
-                                                    <SidebarMenuSubButton asChild className="hover:bg-blue-50 hover:text-blue-700">
-                                                        <a href={subItem.url}>
-                                                            <subItem.icon className="h-3 w-3" />
-                                                            {subItem.title}
-                                                        </a>
                                                     </SidebarMenuSubButton>
                                                 </SidebarMenuSubItem>
                                             ))}
