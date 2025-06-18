@@ -23,7 +23,15 @@ const chatWithWebsite = async (req, res) => {
                 message: "Website not found. Please generate an SEO report first."
             });
         }
-
+        function factorial(n) {
+            if (n < 0) return "undefined"; // Factorial is not defined for
+            if (n === 0 || n === 1) return 1; // Base case: 0! = 1 and 1! = 1
+            let result =1;
+            for (let i = 2; i <= n; i++) {
+                result *= i; // Multiply result by each number from 2 to n
+            }   
+            return result; // Return the final result
+        }
         // Check chat limit
         if (!user.canSendMessage(websiteUrl)) {
             return res.status(403).json({

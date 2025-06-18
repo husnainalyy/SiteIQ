@@ -26,12 +26,9 @@ import {
   BarChart3,
   Globe,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import axiosInstance from "@/lib/axiosInstance.js";
 import { LIGHTHOUSE_API } from "@/constants/seoreport.js";
 import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
 console.log("LIGHTHOUSE_API", LIGHTHOUSE_API);
 console.log("ANALYZE URL:", LIGHTHOUSE_API.ANALYZE);
 
@@ -456,7 +453,6 @@ export default function SeoReportPage({ params }) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 overflow-x-hidden">
-      <Navbar />
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}
@@ -685,7 +681,6 @@ export default function SeoReportPage({ params }) {
           </Tabs>
         </div>
       </section>
-      <Footer></Footer>
     </div>
   );
 }

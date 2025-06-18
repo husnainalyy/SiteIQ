@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import SeoRecommendation from "@/components/SeoRecommendations";
 import axios from "@/lib/axiosInstance.js";
 import { Search, Sparkles, TrendingUp, Zap } from "lucide-react";
@@ -38,7 +36,6 @@ const Recommendation = () => {
 
   return (
     <>
-      <Navbar />
 
       {/* Header Section */}
       <div className="bg-white py-16 text-center border-b">
@@ -143,7 +140,6 @@ const Recommendation = () => {
         </div>
       </div>
 
-      <Footer />
     </>
   );
 };

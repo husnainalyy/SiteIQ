@@ -97,7 +97,6 @@ const Recommendation = () => {
 
   return (
     <>
-      <Navbar />
 
       {/* Header Section */}
       <div className="bg-white py-16 text-center border-b">
@@ -262,8 +261,7 @@ const Recommendation = () => {
         </div>
       </div>
 
-      <Footer />
-
+          
       <style jsx>{`
         @keyframes fade-in-up {
           from {

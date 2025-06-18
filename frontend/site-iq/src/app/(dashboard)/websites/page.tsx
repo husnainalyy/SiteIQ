@@ -269,7 +269,7 @@ export default function WebsitesPage() {
                                                 className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
                                                 asChild
                                             >
-                                                <Link href={`/websites/${site._id}/seo-report`}>
+                                                <Link href={`/seoreport/base/${site._id}`}>
                                                     <BarChart3 className="h-4 w-4 mr-2" />
                                                     SEO Report
                                                 </Link>
@@ -286,9 +286,7 @@ export default function WebsitesPage() {
                                             >
                                                 <Link
                                                     href={
-                                                        hasRecommendations
-                                                            ? `/websites/${site._id}/recommendations`
-                                                            : `/websites/${site._id}/generate-report`
+                                                             `/recommendation/${site._id}`
                                                     }
                                                 >
                                                     {hasRecommendations ? (

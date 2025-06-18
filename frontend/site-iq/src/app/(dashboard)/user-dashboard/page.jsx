@@ -113,7 +113,7 @@ function WebsitesSection({ websites, isLoading }) {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => router.push(`/singlewebsite/${website._id}`)}
+                                            onClick={() => router.push(`/website/${website._id}`)}
                                             className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50"
                                         >
                                             <Eye className="w-3 h-3 mr-1" />

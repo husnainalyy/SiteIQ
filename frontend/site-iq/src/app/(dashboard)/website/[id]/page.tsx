@@ -194,7 +194,7 @@ export default function WebsitePage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="outline" size="icon" asChild>
-                            <Link href="/dashboard">
+                            <Link href="/user-dashboard">
                                 <ArrowLeft className="h-4 w-4" />
                             </Link>
                         </Button>
@@ -211,7 +211,7 @@ export default function WebsitePage() {
                             </Link>
                         </Button>
                         <Button asChild>
-                            <Link href={`/websites/${website._id}/chat`}>
+                            <Link href={`/chat/${website._id}`}>
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 Chat
                             </Link>
@@ -429,27 +429,27 @@ export default function WebsitePage() {
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <Button className="w-full justify-start" asChild>
-                                        <Link href={`/websites/${website._id}/seo-report`}>
+                                        <Link href={`/seoreport/base/${website._id}`}>
                                             <BarChart3 className="h-4 w-4 mr-2" />
                                             View Full SEO Report
                                         </Link>
                                     </Button>
                                     <Button variant="outline" className="w-full justify-start" asChild>
-                                        <Link href={`/websites/${website._id}/chat`}>
+                                        <Link href={`/chat/${website._id}`}>
                                             <MessageSquare className="h-4 w-4 mr-2" />
                                             Chat with AI Assistant
                                         </Link>
                                     </Button>
                                     {hasRecommendations ? (
                                         <Button variant="outline" className="w-full justify-start" asChild>
-                                            <Link href={`/websites/${website._id}/recommendations`}>
+                                            <Link href={`/recommendation/${website._id}`}>
                                                 <Lightbulb className="h-4 w-4 mr-2" />
                                                 View Recommendations
                                             </Link>
                                         </Button>
                                     ) : (
                                         <Button variant="outline" className="w-full justify-start" asChild>
-                                            <Link href={`/websites/${website._id}/generate-report`}>
+                                            <Link href={`/recommendation/${website._id}`}>
                                                 <Zap className="h-4 w-4 mr-2" />
                                                 Generate SEO Report
                                             </Link>
@@ -594,7 +594,7 @@ export default function WebsitePage() {
                                     <h3 className="text-lg font-medium text-slate-900 mb-2">No SEO Scores Available</h3>
                                     <p className="text-slate-600 mb-4">Generate an SEO report to see detailed scoring metrics.</p>
                                     <Button asChild>
-                                        <Link href={`/websites/${website._id}/generate-report`}>Generate SEO Report</Link>
+                                        <Link href={`/seoreport/${website._id}`}>Generate SEO Report</Link>
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -631,7 +631,7 @@ export default function WebsitePage() {
                                         Generate SEO recommendations to get personalized improvement tips.
                                     </p>
                                     <Button asChild>
-                                        <Link href={`/websites/${website._id}/generate-report`}>Generate Recommendations</Link>
+                                        <Link href={`/recommendation/${website._id}`}>Generate Recommendations</Link>
                                     </Button>
                                 </CardContent>
                             </Card>

@@ -77,13 +77,14 @@ const SeoRecommendation: React.FC<SeoRecommendationProps> = ({ markdown, index }
             em: ({ node, ...props }) => (
               <em className="text-purple-700 italic" {...props} />
             ),
-            code: ({ node, inline, ...props }) => (
-              inline ? (
+            code: ({ node, ...props }) => {
+              const isInline = (props as any).inline;
+              return isInline ? (
                 <code className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-mono" {...props} />
               ) : (
                 <code className="block bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto" {...props} />
-              )
-            ),
+              );
+            },
             blockquote: ({ node, ...props }) => (
               <blockquote className="border-l-4 border-purple-300 bg-purple-50/50 pl-6 py-3 my-4 italic text-purple-800" {...props} />
             ),

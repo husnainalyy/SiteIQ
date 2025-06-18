@@ -10,13 +10,16 @@ export const metadata = {
     description: "Simple Dashboard Layout",
 };
 
+
 export default function DashboardLayout({ children }) {
     return (
         <div className={inter.className}>
             <SidebarProvider>
                 <div className="flex min-h-screen">
-                    <AppSidebar />
-                    <main className="flex-1 w-full border bg-gray-50 p-4">{children}</main>
+                    <AppSidebar /> {/* Should have a fixed width */}
+                    <main className="flex-1 border bg-gray-50 p-4">
+                        <div className="w-full">{children}</div>
+                    </main>
                 </div>
             </SidebarProvider>
         </div>

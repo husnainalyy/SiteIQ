@@ -32,19 +32,19 @@ const seoMenuItems = [
                 url: "/dashboard/seo/advanced",
             },
             {
-                title: "Basic",
-                url: "/dashboard/seo/basic",
+                title: "base",
+                url: "/seoreport/base",
             },
         ],
         subItems: [
             {
                 title: "Recommendations",
-                url: "/dashboard/recommendations",
+                url: "/recommendation",
                 icon: CheckSquare,
             },
             {
                 title: "Chat",
-                url: "/dashboard/chat",
+                url: "/chat",
                 icon: MessageSquare,
             },
         ],
@@ -54,23 +54,23 @@ const seoMenuItems = [
 const techStackItems = [
     {
         title: "Improvements",
-        url: "/dashboard/techstack/improvements",
+        url: "/techstack/improvements",
     },
     {
         title: "Recommendations",
-        url: "/dashboard/techstack/recommendations",
+        url: "/techstack/recommendations",
     },
 ]
 
 const mainMenuItems = [
     {
         title: "Dashboard",
-        url: "/dashboard",
+        url: "/user-dashboard",
         icon: Home,
     },
     {
         title: "Websites",
-        url: "/dashboard/websites",
+        url: "/websites",
         icon: Globe,
     },
    

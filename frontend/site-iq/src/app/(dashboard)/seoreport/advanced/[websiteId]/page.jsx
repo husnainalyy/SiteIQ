@@ -402,7 +402,6 @@ export default function AdvancedSeoReports({}) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white p-6">
-      <Navbar />
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -547,7 +546,6 @@ export default function AdvancedSeoReports({}) {
           )}
         </div>
       </section>
-      <Footer />
     </div>
   );
 }
