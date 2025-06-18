@@ -22,7 +22,7 @@ router.use(mockClerkAuth);
 
 // CREATE (Generate recommendations) with usage limit + increment
 router.post(
-    '/generate',
+    '/generate/:websiteId',
     checkSubscriptionLimit('seo'),  
     async (req, res, next) => {
       await incrementUsage(req.auth.userId, 'seo');  // call utility

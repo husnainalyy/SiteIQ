@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoRecommendation from "@/components/SeoRecommendations";
 import { Search, Sparkles, TrendingUp, Zap } from "lucide-react";
+import axios from "@/lib/axiosinstance.js";
 
 const Recommendation = () => {
   const [recommendations, setRecommendations] = useState([]);
@@ -14,7 +15,7 @@ const Recommendation = () => {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const res = await fetch("http://localhost:4500/api/seoRecommendations");
+        const res = await fetch("http://localhost:4500/api/seorecommendations");
         if (!res.ok) throw new Error("Failed to fetch recommendations");
 
         const data = await res.json();

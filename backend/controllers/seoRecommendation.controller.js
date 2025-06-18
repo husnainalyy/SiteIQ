@@ -4,71 +4,116 @@ import SeoRecommendation from "../models/seoRecommendation.js";
 import Website from "../models/website.js"; //new
 
 
-// ✅ CREATE
 const generateSEORecommendations = async (req, res) => {
   try {
-    console.log("✅ Step 1: Extracting user ID from auth...");
-    const clerkuserId = req.auth.userId;
-    console.log(clerkuserId);
+    console.log("✅ Step 1: Auth check");
+    const clerkuserId = req.auth?.userId;
 
-    if (!req.auth || !req.auth.userId) {
+    if (!clerkuserId) {
       console.warn("❌ Missing auth context.");
-      return res.status(401).json({ error: "Unauthrized" });
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    console.log("✅ Step 2: Extracting domain from request body...");
-    const { domain } = req.body;
+    console.log("✅ Step 2: Extracting websiteId from params");
+    const { websiteId } = req.params;
 
-    if (!domain) {
-      console.warn("❌ Missing required field: domain.");
-      return res.status(400).json({ error: "Missing required field: domain." });
+    if (!websiteId) {
+      console.warn("❌ websiteId missing in URL params.");
+      return res.status(400).json({ error: "Missing website ID in request parameters." });
     }
 
-    console.log("✅ Step 3: Searching for SEO report in Website collection...");
+    console.log("✅ Step 3: Finding Website by ID...");
+    const websiteDoc = await Website.findOne({ _id: websiteId, clerkuserId }).populate("seoReport");
 
-    // Step 1: Find the Website and populate the seoReport field
-    const websiteDoc = await Website.findOne({ clerkuserId, domain }).populate('seoReport');
-    
-    console.log("websiteDoc:", JSON.stringify(websiteDoc, null, 2));
-    
-    // Step 2: Validate and extract seoReport
-    if (!websiteDoc || !websiteDoc.seoReport || websiteDoc.seoReport.length === 0) {
-      console.warn("❌ Website not found or no SEO reports attached.");
-      return res.status(404).json({
-        error: "Website not found or contains no SEO reports.",
-      });
+    if (!websiteDoc) {
+      console.warn("❌ Website not found.");
+      return res.status(404).json({ error: "Website not found." });
     }
-    
-    // You can now access the SEO report(s)
-    const seoReportDoc = websiteDoc.seoReport[0]; // Or use logic to pick one (latest, first, etc.)
-    console.log("seoReportDoc:", JSON.stringify(seoReportDoc, null, 2));
-    
-    // Optional: Check if phraseResults exists
+
+    console.log("✅ Step 4: Extracting SEO report...");
+    const seoReportDoc = websiteDoc.seoReport?.[0];
+
+    if (!seoReportDoc) {
+      console.warn("❌ No SEO report found for website.");
+      return res.status(404).json({ error: "SEO report not found for this website." });
+    }
+
     if (!seoReportDoc.phraseResults || seoReportDoc.phraseResults.length === 0) {
-      console.warn("❌ SEO report found but no phrase results.");
-      return res.status(404).json({
-        error: "SEO report contains no phrase results.",
-      });
+      console.warn("❌ No phraseResults in SEO report.");
+      return res.status(404).json({ error: "SEO report contains no phrase results." });
     }
-    
 
-    console.log("✅ Step 4: Validating Novita API key...");
+    console.log("✅ Step 5: Extracting score objects...");
+    const scoresArray = seoReportDoc.phraseResults.map(p => p.scores).slice(0, 10);
+
     const NOVITA_API_KEY = process.env.NOVITA_API_KEY;
     if (!NOVITA_API_KEY) {
-      console.error("❌ Missing Novita API key in environment variables.");
-      return res.status(500).json({ error: "Server configuration error." });
+      return res.status(500).json({ error: "Missing Novita API key." });
     }
 
-    console.log("✅ Step 5: Extracting and trimming scores array...");
-    const scoresArray = seoReportDoc.phraseResults
-    ?.map(r => r.scores)
-    .slice(0, 10);
-  
-  console.log("✅ scoresArray:", scoresArray);
-  
-    console.log("✅ Step 6: Constructing prompt...");
-    const prompt = `
-    You are provided with an SEO scoring report containing detailed metrics representing the health and performance of a website’s SEO. The scores object includes the following dimensions:
+    console.log("✅ Step 6: Building prompt...");
+    const prompt = buildSEOPrompt(scoresArray);
+
+    console.log("✅ Step 7: Sending to Novita API...");
+    const response = await axios.post(
+      "https://api.novita.ai/v3/openai/chat/completions",
+      {
+        model: "deepseek/deepseek_v3",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 500,
+        stream: false,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${NOVITA_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const seoRecommendationText = response.data?.choices?.[0]?.message?.content?.trim();
+
+    if (!seoRecommendationText) {
+      return res.status(500).json({ error: "AI model returned empty response." });
+    }
+
+    console.log("✅ Step 8: Saving recommendation to DB...");
+    const newRecommendation = new SeoRecommendation({
+      clerkUserId: clerkuserId,
+      website: websiteDoc._id,
+      seoReport: seoReportDoc._id,
+      recommendations: {
+        seo: seoRecommendationText,
+        lighthouse: "",
+      },
+      action: "Analyzed",
+    });
+
+    await newRecommendation.save();
+
+    await Website.findByIdAndUpdate(
+      websiteId,
+      { $push: { seoRecommendation: newRecommendation._id } },
+      { new: true }
+    );
+
+    console.log("✅ Step 9: Response to client");
+    return res.status(200).json({
+      message: "SEO recommendation generated and saved successfully.",
+      recommendation: {
+        seo: seoRecommendationText,
+      },
+    });
+  } catch (error) {
+    console.error("❌ generateSEORecommendations error:", error?.response?.data || error.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+function buildSEOPrompt(scoresArray) {
+  return `
+You are provided with an SEO scoring report containing detailed metrics representing the health and performance of a website’s SEO. The scores object includes the following dimensions:
     
     - **rankingPosition:** Numerical score indicating the average ranking positions of targeted keywords in search engine results pages (SERPs). Higher scores mean better average rankings.
     - **keywordRelevance:** Numerical score reflecting how well the website’s content matches the targeted keywords and user intent.
@@ -134,77 +179,12 @@ const generateSEORecommendations = async (req, res) => {
     
     Here is the SEO scoring data you must analyze:
     
-    ${JSON.stringify(scoresArray, null, 2)}
-    `;
-    
-    console.log("✅ Step 7: Sending request to Novita AI...");
-    const response = await axios.post(
-      "https://api.novita.ai/v3/openai/chat/completions",
-      {
-        model: "deepseek/deepseek_v3",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 500,
-        stream: false,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${NOVITA_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
 
-    if (!response.data.choices || response.data.choices.length === 0) {
-      console.error("❌ AI model returned empty response.");
-      return res.status(500).json({ error: "AI model returned an empty response." });
-    }
+${JSON.stringify(scoresArray, null, 2)}
+  `;
+}
 
-    console.log("✅ Step 8: Extracting recommendation text...");
-    const seoRecommendationText = response.data.choices[0].message.content.trim();
 
-    console.log("✅ Step 9: Saving recommendation to database...");
-
-// Step 1: Create and save recommendation
-const newRecommendation = new SeoRecommendation({
-  clerkUserId: clerkuserId,  // assuming this variable exists and matches the user ID
-  website: websiteDoc._id,   // make sure you have the websiteDoc from DB
-  seoReport: seoReportDoc._id,  // must be unique per schema
-  recommendations: {
-    seo: seoRecommendationText,
-    lighthouse: "", // Optional placeholder
-  },
-  action: "Analyzed", // default is "Analyzed" but explicitly setting here
-});
-
-await newRecommendation.save();
-
-    
-    await newRecommendation.save(); // Save to DB
-    console.log("✅ Recommendation saved:", newRecommendation._id);
-    
-    // Step 2: Push the recommendation _id to Website.seoRecommendation array
-    await Website.findOneAndUpdate(
-      { clerkuserId, domain },
-      { $push: { seoRecommendation: newRecommendation._id } },
-      { new: true } // Return the updated document
-    );
-    
-    console.log("✅ Recommendation reference added to Website object.");
-    
-    
-    console.log("✅ Step 10: Successfully saved and responding to client.");
-    return res.status(200).json({
-      message: "SEO recommendation generated and saved successfully.",
-      recommendation: {
-        seo: seoRecommendationText
-      }
-    });
-    
-  } catch (error) {
-    console.error("❌ Error generating SEO recommendations:", error.response?.data || error.message || error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
 
 
 const generateLightHouseRecommendation = async (req, res) => {
