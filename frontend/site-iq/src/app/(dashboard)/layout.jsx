@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }) {
     return (
             <div className={inter.className}>
                 <SidebarProvider>
-                    <div className="flex min-h-screen">
+                    <div className="flex min-h-screen w-full">
                         {/* AppSidebar should ideally have a fixed width for correct flex behavior */}
                         <AppSidebar />
                         <main className="flex-1 border bg-gray-50 p-4">
@@ -23,6 +23,6 @@ export default function DashboardLayout({ children }) {
                         </main>
                     </div>
                 </SidebarProvider>
-            </div>
-    );
+            </div>
+    );
 }
