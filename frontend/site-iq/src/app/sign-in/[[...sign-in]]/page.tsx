@@ -1,24 +1,10 @@
-'use client';
-
+// frontend/site-iq/src/app/sign-in/[[...sign-in]]/page.jsx
 import { SignIn } from "@clerk/nextjs";
-import { useSearchParams } from "next/navigation";
 
-export default function SignInPage() {
-  const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get('redirect_url') || '/';
-
+export default function Page() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignIn 
-        redirectUrl={redirectUrl}
-        appearance={{
-          elements: {
-            formButtonPrimary: 
-              "bg-slate-500 hover:bg-slate-400 text-sm normal-case",
-            card: "bg-white shadow-xl",
-          },
-        }}
-      />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <SignIn />
     </div>
   );
-} 
+}
