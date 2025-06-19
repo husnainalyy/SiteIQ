@@ -212,27 +212,27 @@ export default function AboutUs() {
             <TeamMember
               name="Husnain Ali"
               role="Lead Developer"
-              image="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=60"
+              image=""
               delay={0.2}
               description="Former Google SEO expert with 10+ years of experience in digital marketing and AI technology."
             />
             <TeamMember
-              name="Muhammad Ateeb Saleeni"
+              name="Muhammad Ateeb Saleemi"
               role="Project Manager"
-              image="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=60"
+              image="/ateeb.jpg"
               delay={0.4}
               description="AI and machine learning specialist with a background in developing enterprise-scale applications."
             />
             <TeamMember
               name="Syed Qadr Islam"
-              role="Team Lead"
-              image="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=60"
+              role="Lead Developer"
+              image="/qadr.jpg"
               delay={0.6}
               description="Product visionary with expertise in UX design and data-driven product development."
             />
             <TeamMember
               name="Muhammad Abdullah"
-              role="Intern"
+              role="Team Lead"
               image="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=60"
               delay={0.8}
               description="Leading our AI research initiatives with expertise in natural language processing and machine learning algorithms."
