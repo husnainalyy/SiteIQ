@@ -96,12 +96,14 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-blue-200">
       <SidebarHeader className="border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white">
-        <div className="flex items-center space-x-2 px-2 py-3">
-          <div className="h-8 w-8 rounded bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center">
-            <TrendingUp className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-bold text-lg text-gray-900">SEO Platform</span>
-        </div>
+          <a href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center transform transition-transform group-hover:scale-110">
+              <span className="text-white font-bold text-xl">S</span>
+            </div>
+            <h1 className="text-2xl font-bold">
+              Site<span className="text-accent">IQ</span>
+            </h1>
+          </a>
       </SidebarHeader>
 
       <SidebarContent className="bg-white">
