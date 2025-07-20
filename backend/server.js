@@ -50,6 +50,7 @@ app.use(clerkMiddleware());
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' })); // Raw body for webhooks
 app.use(express.json()); // JSON for other routes
+app.use('/api/stripe', stripeRoutes);
 
 
 
@@ -75,8 +76,10 @@ app.use("/api/lighthouse", lighthouseRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/techstack", techStackRoutes);
 app.use('/api/seoRecommendations', seoRecommendationsRoutes);
-app.use("/api/userchat", userChatRoutes);   
-app.use("/api/dashboard",dashboardRoutes);
+app.use("/api/userchat", userChatRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/chat', techstackChatRoutes);
+
 
 
 
