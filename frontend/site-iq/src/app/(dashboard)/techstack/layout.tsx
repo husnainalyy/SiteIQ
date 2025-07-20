@@ -12,11 +12,9 @@ export default function TechStackLayout({
 }) {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden ">
-      <Navbar />
       <div className="pt-24 pb-20">
         {children}
       </div>
-      <Footer />
     </div>
   );
 }

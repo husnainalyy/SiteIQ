@@ -2,7 +2,6 @@
 
 import express from 'express';
 
-import mockClerkAuth from "../middleware/testclerkauth.js";
 import checkSubscriptionLimit from '../middleware/checkSubscriptionLimit.js';
 import incrementUsage from '../utils/incrementUsage.js';
 

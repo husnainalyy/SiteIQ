@@ -154,16 +154,29 @@ const processAnalysis = async (reportId, domain) => {
 // 📄 READ ONE
 const getReport = async (req, res) => {
     try {
+        
         const { id } = req.params;
-        const report = await SeoReport.findById(id).populate("website");
+        console.log("🔍 Looking up website with ID:", id);
 
-        if (!report) {
-            return res.status(404).json({ error: "Report not found" });
+        const website = await Website.findById(id).populate("seoReport");
+
+        if (!website) {
+            return res.status(404).json({ error: "Website not found" });
         }
 
-        return res.status(200).json(report);
+        if (!website.seoReport) {
+            return res.status(404).json({ error: "No SEO report associated with this website" });
+        }
+
+        const lighthouse = website.seoReport.lighthouse;
+
+        if (!lighthouse) {
+            return res.status(404).json({ error: "Lighthouse report not found" });
+        }
+
+        return res.status(200).json(website.seoReport);
     } catch (error) {
-        console.error("❌ Error fetching report:", error.message || error);
+        console.error("❌ Error fetching lighthouse report:", error.message || error);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 };

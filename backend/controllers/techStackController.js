@@ -6,7 +6,7 @@ import { extractHostname } from "../services/techstackUrlHelper.js"; // helper w
 // RECOMMEND new tech stack (no website)
 export async function recommendStack(req, res) {
   const { useCase, seoFocused, performanceFocused } = req.body;
-
+  
   if (!useCase || typeof seoFocused !== "boolean" || typeof performanceFocused !== "boolean") {
     return res.status(400).json({ error: "Use case, SEO focus, and performance focus are required" });
   }

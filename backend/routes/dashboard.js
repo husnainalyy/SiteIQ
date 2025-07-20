@@ -6,7 +6,6 @@ import {
     getUserSeoRecommendations,
     getRecentTechStacks,
 } from "../controllers/dashboardController.js";
-import mockClerkAuth from "../middleware/testclerkauth.js";
 
 const router = express.Router();
 

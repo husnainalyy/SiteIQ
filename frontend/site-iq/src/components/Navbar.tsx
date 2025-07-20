@@ -3,10 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+// Import Clerk's useUser hook and SignOutButton
+import { useUser, SignOutButton } from "@clerk/nextjs";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Get the user's authentication status from Clerk
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,7 +56,7 @@ const Navbar = () => {
                   href="/"
                   className="font-medium hover:text-accent transition-colors cursor-pointer"
                 >
-                 SITEIQ
+                  SITEIQ
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
@@ -82,25 +87,51 @@ const Navbar = () => {
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
+              {isSignedIn && ( // Conditionally render User Dashboard link if signed in
+                <li className="relative group">
+                  <Link
+                    href="/user-dashboard" // Link to user dashboard
+                    className="font-medium hover:text-accent transition-colors cursor-pointer"
+                  >
+                    Dashboard
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
-              className="flex hover:border-accent hover:text-accent hover:bg-transparent transition-all cursor-pointer"
-              asChild
-            >
-              <Link href="/sign-in">Login</Link>
-            </Button>
-            <Button className="gradient-bg relative overflow-hidden group hidden sm:flex" asChild>
-              <Link href="/sign-up">
-                <span className="relative z-10">Get Started</span>
-                <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
-              </Link>
-            </Button>
-            
-            <button 
+            {isSignedIn ? (
+              // If user is signed in, show Logout button
+              <SignOutButton>
+                <Button
+                  variant="outline"
+                  className="flex hover:border-accent hover:text-accent hover:bg-transparent transition-all cursor-pointer"
+                >
+                  Logout
+                </Button>
+              </SignOutButton>
+            ) : (
+              // If user is not signed in, show Login and Get Started buttons
+              <>
+                <Button
+                  variant="outline"
+                  className="flex hover:border-accent hover:text-accent hover:bg-transparent transition-all cursor-pointer"
+                  asChild
+                >
+                  <Link href="/sign-in">Login</Link>
+                </Button>
+                <Button className="gradient-bg relative overflow-hidden group hidden sm:flex" asChild>
+                  <Link href="/sign-up">
+                    <span className="relative z-10">Get Started</span>
+                    <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+                  </Link>
+                </Button>
+              </>
+            )}
+
+            <button
               className="md:hidden text-gray-700 focus:outline-none"
               onClick={toggleMobileMenu}
             >
@@ -109,52 +140,73 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
-      <div 
+      <div
         className={`md:hidden fixed top-[72px] left-0 right-0 transform transition-all duration-300 ease-in-out cursor-click ${
-          mobileMenuOpen 
-            ? 'translate-y-0 opacity-100' 
+          mobileMenuOpen
+            ? 'translate-y-0 opacity-100'
             : '-translate-y-full opacity-0 pointer-events-none'
         }`}
       >
         <div className="bg-white/90 backdrop-blur-md px-4 py-2 shadow-lg">
           <nav className="flex flex-col space-y-4 py-3">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
               onClick={() => setMobileMenuOpen(false)}
             >
               SITEIQ
             </Link>
-            <Link 
-              href="/features" 
+            <Link
+              href="/features"
               className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
               onClick={() => setMobileMenuOpen(false)}
             >
               Features
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
               onClick={() => setMobileMenuOpen(false)}
             >
               Pricing
             </Link>
-            <Link 
-              href="/aboutus" 
+            <Link
+              href="/aboutus"
               className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
               onClick={() => setMobileMenuOpen(false)}
             >
               About Us
             </Link>
-            <Link 
-              href="/login" 
-              className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </Link>
+            {/* Conditional rendering for mobile menu Login/Logout */}
+            {isSignedIn ? (
+              <SignOutButton>
+                <span // Use a span or div to make it clickable and style it like a link
+                  className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Logout
+                </span>
+              </SignOutButton>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
+            {isSignedIn && ( // Conditionally render User Dashboard link in mobile menu if signed in
+              <Link
+                href="/user-dashboard"
+                className="font-medium hover:text-accent transition-colors py-2 transform hover:translate-x-2 duration-200 cursor-pointer"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
           </nav>
         </div>
       </div>

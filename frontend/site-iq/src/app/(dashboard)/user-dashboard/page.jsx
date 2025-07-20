@@ -22,10 +22,12 @@ import {
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance.js";
 
+// IMPORT ReactMarkdown and remarkGfm
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 // Components
 function ProfileSection({ profile, isLoading }) {
-  
-
     if (!profile) return null
 
     const getPlanColor = (plan) => {
@@ -55,22 +57,14 @@ function ProfileSection({ profile, isLoading }) {
                             <p className="text-sm text-gray-500">{profile.email}</p>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <Badge className={getPlanColor(profile.plan)}>
-                            {profile.plan === "business" && <Crown className="w-3 h-3 mr-1" />}
-                            {profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)}
-                        </Badge>
-                        <p className="text-sm text-gray-500 mt-2">Website Limit: {profile.websiteLimit}</p>
-                        <p className="text-xs text-gray-400">Login Count: {profile.loginCount}</p>
-                    </div>
                 </div>
             </CardHeader>
         </Card>
     )
 }
+
 function WebsitesSection({ websites, isLoading }) {
     const router = useRouter()
-  
 
     return (
         <Card className="border-blue-200">
@@ -134,8 +128,6 @@ function RecommendationsSection({
     recommendations,
     isLoading,
 }) {
-   
-
     return (
         <Card className="border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -143,11 +135,7 @@ function RecommendationsSection({
                     <CheckCircle className="w-5 h-5 mr-2 text-blue-600" />
                     SEO Recommendations
                 </CardTitle>
-                <Link href="/dashboard/recommendations">
-                    <Button variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
-                        View All <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                </Link>
+
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -162,7 +150,31 @@ function RecommendationsSection({
                                         </span>
                                     </div>
 
-                                    <div className="text-sm text-gray-700">{recommendation.recommendations.seo.substring(0, 200)}...</div>
+                                    {/* MODIFIED LINE */}
+                                    <div className="text-sm text-gray-700">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                // Apply styling to strong tags for the "pop of color"
+                                                strong: ({ node, ...props }) => (
+                                                    <strong className="text-blue-700 font-semibold bg-blue-50 px-1 py-0.5 rounded" {...props} />
+                                                ),
+                                                // Ensure paragraphs don't introduce unwanted block spacing if they're meant to be inline-like
+                                                p: ({ node, ...props }) => (
+                                                    <p className="inline" {...props} />
+                                                )
+                                                // You can add more component overrides here if other Markdown elements
+                                                // appear in your truncated string and you want to style them.
+                                                // For example, for links:
+                                                // a: ({ node, ...props }) => (
+                                                //   <a className="text-blue-600 hover:underline" {...props} />
+                                                // ),
+                                            }}
+                                        >
+                                            {/* Pass the truncated markdown string to ReactMarkdown */}
+                                            {`${recommendation.recommendations.seo.substring(0, 200)}...`}
+                                        </ReactMarkdown>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -174,8 +186,6 @@ function RecommendationsSection({
 }
 
 function ChatSection({ chatHistory, isLoading }) {
-   
-
     return (
         <Card className="border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -183,11 +193,7 @@ function ChatSection({ chatHistory, isLoading }) {
                     <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
                     Chat History
                 </CardTitle>
-                <Link href="/chat">
-                    <Button variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
-                        View All <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                </Link>
+
             </CardHeader>
             <CardContent>
                 {chatHistory.length === 0 ? (
@@ -219,8 +225,6 @@ function TechStackSection({
     techStack,
     isLoading,
 }) {
-    
-
     return (
         <Card className="border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -252,6 +256,7 @@ function TechStackSection({
                             <div className="text-center py-8 text-gray-500">
                                 <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                 <p>No tech stack improvements yet</p>
+                                <p className="text-sm">Explore opportunities to enhance your website's performance</p>
                             </div>
                         )}
                 </div>
@@ -261,40 +266,40 @@ function TechStackSection({
 }
 
 export default function Dashboard() {
-    const [profile, setProfile] = useState  (null)
-    const [websites, setWebsites] = useState  ([])
-    const [chatHistory, setChatHistory] = useState  ([])
+    const [profile, setProfile] = useState(null)
+    const [websites, setWebsites] = useState([])
+    const [chatHistory, setChatHistory] = useState([])
     const [recommendations, setRecommendations] = useState([])
-    const [techStack, setTechStack] = useState  (null)
+    const [techStack, setTechStack] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState  (null)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-            setIsLoading(true)
-            setError(null)
+                setIsLoading(true)
+                setError(null)
 
-            // Fetch all dashboard data from your APIs using axiosInstance
-            const [
-                profileRes,
-                websitesRes,
-                chatRes,
-                recommendationsRes,
-                techStackRes,
-            ] = await Promise.all([
-                axiosInstance.get("/dashboard/overview"),
-                axiosInstance.get("/dashboard/websites"),
-                axiosInstance.get("/dashboard/chat-history"),
-                axiosInstance.get("/dashboard/seo-recommendations"),
-                axiosInstance.get("/dashboard/techstack"),
-            ])
+                // Fetch all dashboard data from your APIs using axiosInstance
+                const [
+                    profileRes,
+                    websitesRes,
+                    chatRes,
+                    recommendationsRes,
+                    techStackRes,
+                ] = await Promise.all([
+                    axiosInstance.get("/dashboard/overview"),
+                    axiosInstance.get("/dashboard/websites"),
+                    axiosInstance.get("/dashboard/chat-history"),
+                    axiosInstance.get("/dashboard/seo-recommendations"),
+                    axiosInstance.get("/dashboard/techstack"),
+                ])
 
-            setProfile(profileRes.data)
-            setWebsites(websitesRes.data)
-            setChatHistory(chatRes.data)
-            setRecommendations(recommendationsRes.data)
-            setTechStack(techStackRes.data)
+                setProfile(profileRes.data)
+                setWebsites(websitesRes.data)
+                setChatHistory(chatRes.data)
+                setRecommendations(recommendationsRes.data)
+                setTechStack(techStackRes.data)
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An error occurred")
                 console.error("Dashboard fetch error:", err)
@@ -316,15 +321,14 @@ export default function Dashboard() {
             </div>
         )
     }
-    
+
     if (isLoading) {
         return (
             <div className="h-screen w-full border-0 flex items-center justify-center overflow-hidden bg-gray-50">
-                <Skeleton className="h-12  bg-gray-200 animate-pulse" />
+                <Skeleton className="h-12 w-1/2 bg-gray-200 animate-pulse" />
             </div>
         )
     }
-
 
     return (
         <div className="container w-full p-6 space-y-8 bg-white">

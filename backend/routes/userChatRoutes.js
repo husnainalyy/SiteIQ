@@ -6,7 +6,6 @@ import {
   getChatHistory,
   addMessageToChat
 } from "../controllers/userChatController.js";
-import mockClerkAuth from "../middleware/testclerkauth.js"; // ✅ Add this
 
 const router = express.Router();
 

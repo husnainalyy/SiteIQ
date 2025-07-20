@@ -125,7 +125,8 @@ Return **only valid JSON** in this structure:
 - Performance Focused: ${performanceFocused ? "Yes" : "No"}
 `;
 
-
+        // works fine 
+      //  console.log("OR_API_KEY:", OR_API_KEY); // Debugging line to check if API key is loaded
 
 
         const response = await axios.post(
@@ -176,6 +177,7 @@ export async function recommendingTechStack(useCase, seoFocused, performanceFocu
         console.log("User Preferences - Use Case:", useCase);
         console.log("User Preferences - SEO Focused:", seoFocused);
         console.log("User Preferences - Performance Focused:", performanceFocused);
+        console.log("OR_API_KEY:", OR_API_KEY); // Debugging line to check if API key is loaded
 
         if (!OR_API_KEY) throw new Error("❌ Missing OpenRouter API Key");
 const prompt = `
